@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predicting Reactions Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Playfair+Display:ital,wght@0,600;0,800;1,500;1,600&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#080b16; --panel:#10162a; --panel2:#151d36; --line:#24304f; --ink:#e9edf7; --muted:#8f9aba;
+  --accent:#7cc4ff; --good:#5fe3a1; --bad:#ff8080; --gold:#f3c969;
+  --cat:#ff9f6b; --an:#7cc4ff; --mol:#a9b3cf;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45}
+body{background:radial-gradient(1200px 500px at 80% -10%,#1a1f4a55,transparent),radial-gradient(900px 400px at -10% 10%,#3f2a1033,transparent),var(--bg);min-height:100vh}
+header{padding:22px 28px 10px;max-width:1280px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:28px;letter-spacing:-.5px}
+.lattice{display:grid;grid-template-columns:repeat(8,14px);gap:3px}
+.lattice i{width:14px;height:14px;border-radius:50%;display:block}
+.std{color:var(--muted);margin:6px 0 0;font-size:14px;max-width:1000px}
+.std b{color:var(--gold);font-weight:600}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+nav button{font:inherit;font-size:14px;background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:8px 13px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:.15s}
+nav button:hover{border-color:var(--accent)}
+nav button.cur{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:600}
+nav button .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;font-size:11px;font-weight:700}
+nav button.done .dot{background:var(--good);border-color:var(--good);color:#06101f}
+nav button.locked{opacity:.55}
+main{max-width:1280px;margin:0 auto;padding:8px 28px 60px}
+.station{display:none}
+.station.show{display:block;animation:fade .3s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.st-head{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start;margin:14px 0 14px}
+.st-head h2{margin:0 0 4px;font-size:23px}
+.lt{margin:0;color:var(--muted);max-width:660px}
+.lt b{color:var(--gold);font-weight:600}
+.tasks{list-style:none;margin:0;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:300px;font-size:14px}
+.tasks li{display:flex;gap:8px;align-items:flex-start;padding:2px 0;color:var(--muted)}
+.tasks li::before{content:"○";color:var(--muted);width:16px;flex:none}
+.tasks li.ok{color:var(--ink)}
+.tasks li.ok::before{content:"✓";color:var(--good);font-weight:700}
+.tasks li.opt::before{content:"☆";color:var(--gold)}
+.tasks li.opt.ok::before{content:"★";color:var(--gold)}
+.tasks .tt{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);margin-bottom:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px}
+.card h3{margin:0 0 10px;font-size:16px;letter-spacing:.2px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.card h3 small{font-weight:400;color:var(--muted);font-size:12.5px}
+.tag{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.dd{color:#ffd59a;border-color:#ffd59a55}
+.tag.fb{color:#9ff0c8;border-color:#9ff0c855}
+.tag.ex{color:var(--gold);border-color:#f3c96955}
+.hint{color:var(--muted);font-size:13.5px;margin:8px 0 0}
+.mono{font-family:var(--mono)}
+sub{font-size:.72em;line-height:0}
+sup{font-size:.72em;line-height:0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.8px}
+.btn{white-space:nowrap;flex:none;font:inherit;font-size:14.5px;font-weight:600;background:var(--accent);color:#06101f;border:0;padding:9px 16px;border-radius:10px;cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{font-size:13px;padding:6px 11px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{min-height:44px;background:#0a0f1f;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
+.msg b{color:var(--gold)}
+.msg.ok{border-color:#5fe3a155;color:#c9f7df}
+.msg.no{border-color:#ff808055;color:#ffd0d0}
+.banner{padding:10px 14px;border-radius:10px;background:#5fe3a11a;border:1px solid #5fe3a155;color:var(--good);margin-bottom:8px;font-size:14px}
+.banner.warn{background:#f3c96914;border-color:#f3c96955;color:var(--gold)}
+.pill{font-size:13px;padding:5px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.pill b{font-family:var(--mono)}
+input.fill,select.fill{font:inherit;font-family:var(--mono);font-size:15px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:#0a0f1f;color:var(--ink);min-width:70px}
+input.fill:focus,select.fill:focus{outline:none;border-color:var(--accent)}
+input.fill.ok{border-color:var(--good);background:#5fe3a114}
+input.fill.no,select.fill.no{border-color:var(--bad);background:#ff808014}
+select.fill.ok{border-color:var(--good)}
+input.fill.wide{min-width:260px}
+input.fill.short{min-width:56px;width:64px;text-align:center}
+.preview{font-family:var(--mono);color:var(--gold);font-size:15px;min-height:20px}
+/* chips / drag */
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-family:var(--mono);font-size:15px;padding:7px 12px;border-radius:10px;background:var(--panel2);border:1px solid #3a4670;color:var(--ink);cursor:grab;user-select:none;touch-action:none;transition:transform .1s,border-color .15s,background .15s;white-space:nowrap}
+.chip:hover{border-color:var(--accent)}
+.chip.cat{border-color:#ff9f6b88;background:#ff9f6b14}
+.chip.an{border-color:#7cc4ff88;background:#7cc4ff14}
+.chip.word{font-family:var(--sans)}
+.chip.sel{box-shadow:0 0 0 2px var(--gold);border-color:var(--gold)}
+.chip.dragging{opacity:.35}
+.chip.locked{cursor:default;border-color:var(--good);background:#5fe3a11a}
+.chip.shake{animation:shake .35s;border-color:var(--bad)}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.dragghost{position:fixed;z-index:9999;pointer-events:none;transform:translate(-50%,-50%) scale(1.06);box-shadow:0 10px 30px #0009;opacity:.95}
+.zone{border:1.5px dashed #3a4670;border-radius:12px;min-height:48px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;transition:background .15s,border-color .15s}
+.zone.over{border-color:var(--gold);background:#f3c96910}
+.zone.ok{border-style:solid;border-color:var(--good)}
+.bank{display:flex;flex-wrap:wrap;gap:8px;padding:10px;background:#0a0f1f;border:1px solid var(--line);border-radius:12px;min-height:54px}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.bin h4{margin:0 0 6px;font-size:13.5px;font-weight:600}
+.bin .zone{min-height:120px}
+.slot{min-width:66px;min-height:42px;border:1.5px dashed #3a4670;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;padding:3px;vertical-align:middle}
+.slot.over{border-color:var(--gold);background:#f3c96910}
+.slot.coef{min-width:44px}
+.slot .chip{padding:5px 9px}
+.slot.ok{border-style:solid;border-color:var(--good)}
+.slot.no{border-style:solid;border-color:var(--bad)}
+/* electron transfer */
+.etwork{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;align-items:center;padding:18px;background:#070b18;border-radius:14px;min-height:190px}
+.side{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.atom{width:124px;height:124px;position:relative;border-radius:50%;display:grid;place-items:center;transition:.2s}
+.atom .core{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font-size:28px;font-weight:700;font-family:var(--sans)}
+.atom.metal .core{background:radial-gradient(circle at 35% 30%,#ffc69e,#c8642f);color:#2a1206}
+.atom.non .core{background:radial-gradient(circle at 35% 30%,#bfe2ff,#3c7dc4);color:#06101f}
+.atom.zone{border:1.5px dashed transparent;padding:0;min-height:0;display:grid;align-content:center;justify-content:center}
+.atom.zone.over{border-color:var(--gold);background:#f3c96910}
+.atom .edot{position:absolute;width:13px;height:13px;border-radius:50%;padding:0;min-width:0;border:0}
+.atom .edot.mine{background:#f3c969;box-shadow:0 0 6px #f3c969;cursor:grab}
+.atom .edot.own{background:#7cc4ff;box-shadow:0 0 5px #7cc4ff;pointer-events:none}
+.atom .edot.got{background:#f3c969;box-shadow:0 0 6px #f3c969;pointer-events:none}
+.atom .q{position:absolute;top:-4px;right:-6px;font-family:var(--mono);font-weight:700;font-size:17px;color:var(--gold)}
+.atom.ion::before,.atom.ion::after{position:absolute;top:8px;bottom:8px;font-size:84px;line-height:92px;color:#ffffff55;font-weight:300}
+.atom.ion::before{content:"[";left:-8px}.atom.ion::after{content:"]";right:-8px}
+.atom .sub2{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted)}
+.arrow{font-size:28px;color:var(--muted)}
+.pairbtns{display:flex;gap:6px;flex-wrap:wrap}
+.pairbtns button{font:inherit;font-family:var(--mono);font-size:13px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:6px 10px;border-radius:8px;cursor:pointer}
+.pairbtns button.cur{background:var(--accent);color:#06101f;border-color:var(--accent)}
+.pairbtns button.done::after{content:" ✓";color:var(--good)}
+.pairbtns button.cur.done::after{color:#06101f}
+/* charge meter */
+.meterwrap{margin-top:10px}
+.cmeter{position:relative;height:18px;border-radius:9px;background:#0a0f1f;border:1px solid var(--line);overflow:hidden}
+.cmeter .mid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#ffffff55}
+.cmeter .fill{position:absolute;top:0;bottom:0;transition:.2s}
+.cmeter-l{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-family:var(--mono);margin-top:3px}
+.tray{min-height:72px;background:#070b18}
+.target{font-size:19px;font-weight:600}
+.target small{display:block;font-size:12px;color:var(--muted);font-weight:400;letter-spacing:1px;text-transform:uppercase}
+/* quiz */
+.q{padding:12px 0;border-top:1px solid var(--line)}
+.q:first-child{border-top:0}
+.qp{margin:0 0 8px}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{font:inherit;font-size:14.5px;text-align:left;background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:9px 12px;border-radius:10px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.opt.ok{border-color:var(--good);background:#5fe3a11a}
+.opt.no{border-color:var(--bad);background:#ff80801a;opacity:.75}
+.fb{font-size:14px;margin-top:6px;color:var(--muted)}
+.right .fb{color:var(--good)}
+/* steps */
+.prob{background:#0a0f1f;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+.prob .big{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--ink)}
+.step{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:14.5px}
+.step .n{width:22px;height:22px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;flex:none}
+.counter-pill{font-family:var(--mono);font-size:13px;color:var(--muted)}
+/* conductivity */
+.sols{display:flex;flex-direction:column;gap:10px}
+.sols .grp{font-size:12px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.sols .row button{font:inherit;font-family:var(--mono);font-size:13px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:6px 10px;border-radius:8px;cursor:pointer}
+.sols .row button.cur{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.sols .row button.tested::after{content:" ✓";color:var(--good)}
+.probe{display:grid;grid-template-columns:1fr 210px;gap:14px;align-items:center}
+@media(max-width:700px){.probe{grid-template-columns:1fr}}
+.readout{background:#05070f;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.readout .v{font-family:var(--mono);font-size:32px;font-weight:600}
+.readout .u{color:var(--muted);font-size:13px}
+.bulb{width:70px;height:70px;border-radius:50%;margin:10px auto;background:#222838;transition:.4s}
+canvas{display:block;width:100%;border-radius:8px}
+/* drawer */
+#chartBtn{position:fixed;right:18px;bottom:18px;z-index:50;box-shadow:0 8px 30px #000a}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,96vw);background:#0c1124;border-left:1px solid var(--line);z-index:60;transform:translateX(105%);transition:.25s;overflow:auto;padding:18px 20px 40px;box-shadow:-20px 0 60px #000a}
+#drawer.open{transform:none}
+#drawer h3{margin:16px 0 8px;font-size:15px}
+.ions-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;font-family:var(--mono);font-size:13px}
+.ions-grid div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px;text-align:center}
+.ions-grid .h{background:none;border:0;color:var(--gold);font-family:var(--sans);font-size:12px}
+.ions-grid .c{color:#ffd0b5}.ions-grid .a{color:#cfe9ff}
+.ptab td{font-family:var(--mono)}
+/* cert */
+.certwrap img{width:100%;border-radius:8px;box-shadow:0 20px 60px #0008;display:block}
+.form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.form input{font:inherit;font-size:15px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);min-width:220px}
+.reqs li{margin:4px 0}
+footer{max-width:1280px;margin:0 auto;padding:0 28px 30px;color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:center}
+footer button{font:inherit;font-size:12.5px;background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:4px 10px;cursor:pointer}
+#savePanel{max-width:1280px;margin:0 auto 30px;padding:0 28px}
+#savePanel textarea{width:100%;min-height:70px;font-family:var(--mono);font-size:12px;background:#0a0f1f;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px}
+details summary{cursor:pointer;color:var(--accent);font-size:14px}
+.beaker svg{background:#05070f;border-radius:12px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;background:var(--c)}
+
+.molicon svg{display:block}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:none}
+.seg button{font:inherit;font-size:13px;background:var(--panel2);color:var(--ink);border:0;border-right:1px solid var(--line);padding:5px 10px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.cur{background:var(--accent);color:#06101f;font-weight:600}
+.ctl{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.ctlrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ctlrow .lbl{font-family:var(--mono)}
+.stepper{display:inline-flex;align-items:center;gap:6px}
+.stepper button{font:inherit;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:16px;line-height:1}
+.stepper b{font-family:var(--mono);min-width:14px;text-align:center}
+.ecount{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:64px;text-align:right}
+.ecount.ok{color:var(--good)}.ecount.no{color:var(--bad)}
+svg.lewis{background:#070b18;border-radius:14px;width:100%;max-width:440px;display:block;margin:0 auto}
+svg.vsepr{background:#070b18;border-radius:14px;width:100%;display:block;touch-action:none;cursor:grab}
+g[data-drop]{cursor:pointer}
+g[data-drop].over circle.hit{stroke:var(--gold);stroke-width:3}
+.chip .mini{display:block}
+.chip.dot{flex-direction:column;padding:4px 8px 2px}
+.chip.dot small{font-family:var(--sans);font-size:10.5px;color:var(--muted)}
+.info{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.info dt{color:var(--muted)}.info dd{margin:0;font-weight:600}
+.scale{position:relative;height:22px;border-radius:11px;overflow:hidden;display:flex;border:1px solid var(--line)}
+.scale div{display:grid;place-items:center;font-size:11px;color:#06101f;font-weight:600}
+.scale-mark{position:absolute;top:-6px;width:3px;height:34px;background:#fff;box-shadow:0 0 8px #fff;transition:left .3s}
+.scale-l{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:3px}
+.elbtns{display:flex;gap:5px;flex-wrap:wrap}
+.elbtns button{font:inherit;font-family:var(--mono);font-size:13px;min-width:38px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:5px 7px;border-radius:8px;cursor:pointer}
+.elbtns button.cur{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:600}
+.elbtns button.metal{border-color:#ff9f6b66}
+.ref-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-family:var(--mono);font-size:12px}
+.ref-grid div{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 2px;text-align:center}
+.ref-grid div b{display:block;font-size:14px}
+.ref-grid div.e{visibility:hidden}
+.ref-grid div.m{border-color:#ff9f6b55}
+.pre-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-size:13px}
+.pre-grid div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px;text-align:center}
+.pre-grid div b{font-family:var(--mono);color:var(--gold);display:block}
+.numzone{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.numzone .num{font-family:var(--mono);font-size:20px;text-align:center;color:var(--gold)}
+.penny svg{background:#05070f;border-radius:12px;width:100%;display:block}
+.sentence{line-height:2.4;font-size:15px}
+.sentence select{vertical-align:middle}
+
+/* ---- reactions additions ---- */
+.chip.eq{font-size:13.5px;padding:6px 10px}
+.chip.c{border-color:#ff9f6b88;background:#ff9f6b14}
+.chip.a{border-color:#7cc4ff88;background:#7cc4ff14}
+.chip.e{border-color:#c9b6ff88;background:#c9b6ff14}
+.rowbins{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.rowbins .bin{display:grid;grid-template-columns:190px 1fr;gap:10px;align-items:stretch}
+.rowbins .bin h4{display:flex;flex-direction:column;justify-content:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0}
+.rowbins .bin h4 small{color:var(--muted);font-weight:400;font-family:var(--mono);font-size:12px;margin-top:2px}
+.rowbins .zone{min-height:50px}
+@media(max-width:700px){.rowbins .bin{grid-template-columns:1fr}}
+.eqbig{font-family:var(--mono);font-size:24px;font-weight:600;line-height:1.5}
+.eqbig .arr{color:var(--gold);margin:0 6px}
+/* flowchart */
+.flow{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.fq{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);opacity:.45;transition:.2s}
+.fq.act{opacity:1;border-color:var(--accent)}
+.fq.yes{opacity:1;border-color:var(--good);background:#5fe3a114}
+.fq.no{opacity:.8}
+.fq .n{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;flex:none}
+.fq .t{flex:1;min-width:240px;font-size:14.5px}
+.fq .ans{font-size:13px;font-weight:600;min-width:120px;text-align:right}
+.yn{display:flex;gap:6px}
+/* type buttons */
+.tbtns{display:flex;gap:6px;flex-wrap:wrap}
+.tbtns button{font:inherit;font-size:13.5px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:7px 11px;border-radius:9px;cursor:pointer}
+.tbtns button:hover:not(:disabled){border-color:var(--accent)}
+.tbtns button.ok{border-color:var(--good);background:#5fe3a11f}
+.tbtns button.no{border-color:var(--bad);background:#ff80801a;opacity:.7}
+/* balancer */
+.bal{background:#0a0f1f;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+.balrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;font-family:var(--mono);font-size:20px}
+.balrow .sp{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:4px 8px}
+.balrow .sp .cf{display:inline-flex;flex-direction:column;align-items:center;gap:2px}
+.balrow .sp .cf button{font:inherit;font-size:12px;width:26px;height:18px;line-height:1;border-radius:5px;border:1px solid var(--line);background:#0a0f1f;color:var(--ink);cursor:pointer;padding:0}
+.balrow .sp .cf b{font-size:19px;color:var(--gold);min-width:22px;text-align:center}
+.balrow .op{color:var(--muted)}
+.balrow .arr{color:var(--gold)}
+.tally{margin-top:10px;font-size:13.5px}
+.tally td{padding:4px 8px}
+.tally .barL,.tally .barR{height:12px;border-radius:6px;background:#7cc4ff99;display:inline-block;vertical-align:middle}
+.tally .barR{background:#ff9f6b99}
+.tally .st{font-weight:700}
+/* swap builder */
+.prodline{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;font-family:var(--mono);font-size:20px}
+.cmpd{display:inline-flex;gap:3px;padding:4px;border:1px solid var(--line);border-radius:12px;background:#070b18}
+.slot.cat{border-color:#ff9f6b66}.slot.an{border-color:#7cc4ff66}.slot.el{border-color:#c9b6ff66}
+.slot small{font-family:var(--sans);font-size:10.5px;color:var(--muted)}
+/* charge balancer */
+.ionrow{display:flex;flex-wrap:wrap;gap:6px;min-height:46px;align-items:center}
+.ionrow .chip{cursor:default}
+.netq{font-family:var(--mono);font-size:18px;font-weight:600}
+/* lab */
+.labs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+@media(max-width:900px){.labs{grid-template-columns:repeat(3,1fr)}}
+.labs button{font:inherit;font-size:13px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:8px;border-radius:10px;cursor:pointer;text-align:left}
+.labs button b{display:block;font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase}
+.labs button.cur{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.labs button.done::after{content:" ✓";color:var(--good);font-weight:700}
+svg.scene{background:#05070f;border-radius:14px;width:100%;display:block}
+.proc{font-size:13.5px;color:var(--muted);margin:6px 0 0;padding-left:18px}
+.proc li{margin:2px 0}
+.sol-list{font-size:13px;color:var(--muted);margin:0;padding-left:18px}
+.sol-list li{margin:2px 0}
+.sol-list b{color:var(--ink)}
+.ruletbl td,.ruletbl th{font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Predicting Reactions Lab</h1>
+    <div class="molicon" aria-hidden="true"><svg width="120" height="34" viewBox="0 0 120 34"><circle cx="14" cy="17" r="11" fill="#ff9f6b55" stroke="#ff9f6b"/><circle cx="38" cy="17" r="11" fill="#7cc4ff55" stroke="#7cc4ff"/><path d="M56 17h22m-7-6 7 6-7 6" stroke="#f3c969" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="94" cy="17" r="11" fill="#ff9f6b55" stroke="#ff9f6b"/><circle cx="109" cy="17" r="8" fill="#7cc4ff55" stroke="#7cc4ff"/></svg></div>
+  </div>
+  <p class="std"><b>Standard:</b> I can predict the products of a chemical reaction after I identify the type of chemical reaction. <span style="opacity:.8">Identify the type first, then use its pattern to predict the products, balance the charges in each new compound, and balance the equation.</span></p>
+  <nav id="nav">
+    <button data-st="1"><span class="dot">1</span>Reaction Types</button>
+    <button data-st="2"><span class="dot">2</span>Classify It</button>
+    <button data-st="3"><span class="dot">3</span>Predict Products</button>
+    <button data-st="4"><span class="dot">4</span>Charges &amp; Diatomics</button>
+    <button data-st="5"><span class="dot">5</span>Balance It</button>
+    <button data-st="6"><span class="dot">6</span>Virtual Lab</button>
+    <button data-st="7"><span class="dot">7</span>Mastery Check</button>
+    <button data-st="8"><span class="dot">★</span>Certificate</button>
+  </nav>
+</header>
+
+<main>
+<!-- ============ STATION 1 ============ -->
+<section class="station" id="st1">
+  <div class="st-head">
+    <div>
+      <h2>Station 1 · The Five Reaction Types</h2>
+      <p class="lt"><b>Target 1:</b> I can identify types of chemical reactions. Chemists sort reactions by the <i>pattern</i> the atoms follow. If you can spot the pattern, you can predict what a new reaction will make.</p>
+    </div>
+    <ul class="tasks" id="tasks1"></ul>
+  </div>
+  <div class="card">
+    <h3>Model 1: Sort the reactions into sets <small><span class="tag dd">Drag &amp; drop</span> Types of Chemical Reactions POGIL, Models 1 &amp; 2</small></h3>
+    <p class="hint" style="margin-top:0">Look at how many reactants and products there are, and whether any element stands alone. Drag each equation into its row (or tap an equation, then tap a row).</p>
+    <div class="bank" id="m1Bank"></div>
+    <div class="rowbins">
+      <div class="bin"><h4>Synthesis<small>A + B → AB</small></h4><div class="zone" id="m1b0"></div></div>
+      <div class="bin"><h4>Decomposition<small>AB → A + B</small></h4><div class="zone" id="m1b1"></div></div>
+      <div class="bin"><h4>Single replacement<small>A + BC → AC + B</small></h4><div class="zone" id="m1b2"></div></div>
+      <div class="bin"><h4>Double replacement<small>AB + CD → AD + CB</small></h4><div class="zone" id="m1b3"></div></div>
+      <div class="bin"><h4>Combustion<small>CₓHᵧ + O₂ → CO₂ + H₂O</small></h4><div class="zone" id="m1b4"></div></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="m1Chk">Check sort</button><span class="hint" id="m1Fb" style="margin:0"></span></div>
+  </div>
+  <div class="card">
+    <h3>Pattern &amp; Description Match <small><span class="tag dd">Drag &amp; drop</span> POGIL Q4–Q6 · Lab introduction</small></h3>
+    <p class="hint" style="margin-top:0">Each reaction type gets one general pattern and one description.</p>
+    <div class="bank" id="patBank"></div>
+    <div class="bins" style="grid-template-columns:repeat(5,1fr)">
+      <div class="bin"><h4>Synthesis</h4><div class="zone" id="pat0"></div></div>
+      <div class="bin"><h4>Decomposition</h4><div class="zone" id="pat1"></div></div>
+      <div class="bin"><h4>Single replacement</h4><div class="zone" id="pat2"></div></div>
+      <div class="bin"><h4>Double replacement</h4><div class="zone" id="pat3"></div></div>
+      <div class="bin"><h4>Combustion</h4><div class="zone" id="pat4"></div></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="patChk">Check match</button><span class="hint" id="patFb" style="margin:0"></span></div>
+  </div>
+  <div class="card">
+    <h3>Phase Notation <small><span class="tag fb">Fill in</span> POGIL Q1</small></h3>
+    <p class="hint" style="margin-top:0">Equations in Model 1 show the state of each substance, like 2Al(s) + 6HCl(aq) → 2AlCl₃(aq) + 3H₂(g). Match each symbol to its meaning.</p>
+    <div class="row" id="phaseRow" style="gap:18px"></div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="phaseChk">Check</button><span class="hint" id="phaseFb" style="margin:0"></span></div>
+  </div>
+  <div class="card"><h3>Checkpoint 1 <small>Answer every question correctly to finish the station</small></h3><div id="cp1"></div></div>
+</section>
+
+<!-- ============ STATION 2 ============ -->
+<section class="station" id="st2">
+  <div class="st-head">
+    <div>
+      <h2>Station 2 · Classify It</h2>
+      <p class="lt"><b>Targets 1 &amp; 2:</b> Identify and classify reactions. Count the reactants and products, look for O₂ with CO₂ and H₂O, and look for an element standing alone.</p>
+    </div>
+    <ul class="tasks" id="tasks2"></ul>
+  </div>
+  <div class="card">
+    <h3>Reaction Identification Practice <small><span class="tag fb">Choose</span> Lab “DO THESE” list · POGIL Q13 · 10 correct needed</small></h3>
+    <p class="hint" style="margin-top:0">Name the type of each reaction. A problem counts if you get it on your first try.</p>
+    <div id="flow2"></div>
+  </div>
+  <div class="card"><h3>Checkpoint 2 <small>Answer every question correctly to finish the station</small></h3><div id="cp2"></div></div>
+</section>
+
+<!-- ============ STATION 3 ============ -->
+<section class="station" id="st3">
+  <div class="st-head">
+    <div>
+      <h2>Station 3 · Predict the Products</h2>
+      <p class="lt"><b>Target 2:</b> I can classify and predict the products of a chemical reaction. In replacement reactions the <b>cation (+)</b> always comes first and pairs with an <b>anion (−)</b>. Elements and ions trade places by charge.</p>
+    </div>
+    <ul class="tasks" id="tasks3"></ul>
+  </div>
+  <div class="card">
+    <h3>Partner Swap <small><span class="tag dd">Drag &amp; drop</span> POGIL Q10–Q11 · build 4</small></h3>
+    <p class="hint" style="margin-top:0">The reactants have been split into their pieces. <span style="color:var(--cat)">Orange</span> = cation (+), <span style="color:var(--an)">blue</span> = anion (−), <span style="color:#c9b6ff">purple</span> = element. Drag each piece into the products so the partners switch.</p>
+    <div id="swap3"></div>
+  </div>
+  <div class="card">
+    <h3>Type First, Then Predict <small><span class="tag fb">Choose</span> POGIL Q14–Q18 · 6 correct needed</small></h3>
+    <p class="hint" style="margin-top:0">Step 1: name the reaction type. Step 2: use that type's pattern to choose the products. A problem counts if you pick the products on your first try.</p>
+    <div id="mc3"></div>
+  </div>
+  <div class="card"><h3>Checkpoint 3 <small>Answer every question correctly to finish the station</small></h3><div id="cp3"></div></div>
+</section>
+
+<!-- ============ STATION 4 ============ -->
+<section class="station" id="st4">
+  <div class="st-head">
+    <div>
+      <h2>Station 4 · Charges &amp; Diatomic Elements</h2>
+      <p class="lt"><b>Target 3:</b> Balance the charges of new compounds. Every new ionic compound must have a total charge of <b>zero</b>. Seven elements never travel alone: they are <b>diatomic</b> (H₂, N₂, O₂, F₂, Cl₂, Br₂, I₂).</p>
+    </div>
+    <ul class="tasks" id="tasks4"></ul>
+  </div>
+  <div class="card">
+    <h3>Diatomic or Single Atom? <small><span class="tag dd">Drag &amp; drop</span> Lab: “don't forget about diatomics”</small></h3>
+    <p class="hint" style="margin-top:0">When one of these elements is a reactant or product <i>by itself</i>, how is it written? Memory trick: <b>HOFBrINCl</b> (“hoff-brinkle”) or “7 elements make a 7 on the periodic table, plus H.”</p>
+    <div class="bank" id="diaBank"></div>
+    <div class="bins">
+      <div class="bin"><h4 style="color:var(--accent)">Diatomic: written X₂</h4><div class="zone" id="dia0"></div></div>
+      <div class="bin"><h4 style="color:var(--cat)">Written as a single atom</h4><div class="zone" id="dia1"></div></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="diaChk">Check sort</button><span class="hint" id="diaFb" style="margin:0"></span></div>
+  </div>
+  <div class="card">
+    <h3>Charge Balancer <small><span class="tag fb">Build + fill in</span> balance 6 new compounds</small></h3>
+    <div id="chg4"></div>
+  </div>
+  <div class="card">
+    <h3>Error Detective <small><span class="tag fb">Fill in</span> POGIL Q14–Q16 · fix 4</small></h3>
+    <p class="hint" style="margin-top:0">Each student made a mistake when predicting products. Find the error, then type the correct formula(s).</p>
+    <div id="err4"></div>
+  </div>
+  <div class="card"><h3>Checkpoint 4 <small>Answer every question correctly to finish the station</small></h3><div id="cp4"></div></div>
+</section>
+
+<!-- ============ STATION 5 ============ -->
+<section class="station" id="st5">
+  <div class="st-head">
+    <div>
+      <h2>Station 5 · Balance It</h2>
+      <p class="lt"><b>Target 3:</b> Predict the products, balance the charges, and balance the equation. Change <b>coefficients only</b>, never subscripts. Changing a subscript changes the substance.</p>
+    </div>
+    <ul class="tasks" id="tasks5"></ul>
+  </div>
+  <div class="card">
+    <h3>Equation Balancer <small><span class="tag fb">Build</span> Types of Reactions Lab · balance 6</small></h3>
+    <p class="hint" style="margin-top:0">Use ▲ ▼ to change coefficients. The atom tally updates as you go. Click <b>Check</b> when every element matches, using the lowest whole numbers.</p>
+    <div id="bal5"></div>
+  </div>
+  <div class="card">
+    <h3>Predict → Balance → Classify <small><span class="tag fb">Fill in</span> Predicting Reaction Products worksheet · POGIL Q18, Q22–23 · 5 needed</small></h3>
+    <p class="hint" style="margin-top:0">The full skill. Type the products using <b>+</b> between them, like <span class="mono">NaBr + Fe</span>. Plain numbers are fine (H2O); the preview shows them as subscripts.</p>
+    <div id="pipe5"></div>
+  </div>
+  <div class="card"><h3>Checkpoint 5 <small>Answer every question correctly to finish the station</small></h3><div id="cp5"></div></div>
+</section>
+
+<!-- ============ STATION 6 ============ -->
+<section class="station" id="st6">
+  <div class="st-head">
+    <div>
+      <h2>Station 6 · Virtual Types of Reactions Lab</h2>
+      <p class="lt"><b>All three targets.</b> Run each of the six lab reactions, record what you observe, classify the reaction, and balance it. These are simulations of the reactions you do at the lab bench.</p>
+    </div>
+    <ul class="tasks" id="tasks6"></ul>
+  </div>
+  <div class="card">
+    <div class="labs" id="labBtns"></div>
+    <div class="grid2" style="gap:16px">
+      <div><svg class="scene" id="scene" viewBox="0 0 420 300"></svg>
+        <div class="row" style="margin-top:8px"><button class="btn" id="runLab">▶ Run reaction</button><span class="hint" id="labNote" style="margin:0"></span></div>
+        <ol class="proc" id="labProc"></ol>
+      </div>
+      <div id="labWork"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Extension: Will a precipitate form? <small><span class="tag ex">Optional</span> Predicting Reaction Products worksheet, page 2</small></h3>
+    <p class="hint" style="margin-top:0">For a double replacement reaction to happen in water, both reactants must dissolve and a product must leave the solution (often as an insoluble solid, a <b>precipitate</b>). Use the solubility rules to decide.</p>
+    <div class="grid2" style="gap:16px">
+      <div id="ppt6"></div>
+      <div><table class="ruletbl"><thead><tr><th>Usually soluble</th><th>Except with</th></tr></thead><tbody>
+        <tr><td>Na⁺, K⁺, NH₄⁺ compounds</td><td>none</td></tr>
+        <tr><td>Nitrates NO₃⁻, acetates C₂H₃O₂⁻</td><td>none</td></tr>
+        <tr><td>Chlorides, bromides, iodides</td><td>Ag⁺, Pb²⁺, Hg₂²⁺</td></tr>
+        <tr><td>Sulfates SO₄²⁻</td><td>Ba²⁺, Pb²⁺, Ca²⁺, Ag⁺</td></tr>
+      </tbody></table>
+      <table class="ruletbl" style="margin-top:8px"><thead><tr><th>Usually insoluble</th><th>Except with</th></tr></thead><tbody>
+        <tr><td>Carbonates, phosphates, chromates</td><td>Na⁺, K⁺, NH₄⁺</td></tr>
+        <tr><td>Hydroxides OH⁻, sulfides S²⁻</td><td>Na⁺, K⁺, NH₄⁺ (Ca²⁺, Ba²⁺ slightly)</td></tr>
+        <tr><td>Fluorides of Ca²⁺, Mg²⁺, Pb²⁺</td><td></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+  <div class="card"><h3>Checkpoint 6 <small>Answer every question correctly to finish the station</small></h3><div id="cp6"></div></div>
+</section>
+
+<section class="station" id="st7">
+  <div class="st-head">
+    <div>
+      <h2>Station 7 · Mastery Check</h2>
+      <p class="lt"><b>The whole standard.</b> Ten questions are pulled at random (3 on identifying types, 3 on classifying and predicting, 4 on charges, diatomics and balancing). Score at least 8 of 10 to earn your certificate. If you miss, read the explanations and retake with a new set.</p>
+    </div>
+  </div>
+  <div class="card" id="finalCard"></div>
+</section>
+
+<section class="station" id="st8">
+  <div class="st-head"><div><h2>Certificate of Completion</h2><p class="lt">Finish all seven stations, then enter your name to generate your certificate.</p></div></div>
+  <div class="card" id="certCard"></div>
+</section>
+</main>
+
+<button class="btn" id="chartBtn">Reference Chart</button>
+<aside id="drawer" aria-label="Reference chart">
+  <div class="row" style="justify-content:space-between"><h2 style="margin:0;font-size:20px">Reference Chart</h2><button class="btn ghost sm" id="drawerClose">Close ✕</button></div>
+  <h3>The five reaction types</h3>
+  <table id="refTypes"></table>
+  <h3>Classify in order: stop at the first “yes”</h3>
+  <ol class="sol-list" id="refFlow"></ol>
+  <h3>Diatomic elements</h3>
+  <p class="hint" style="margin-top:0"><b class="mono" style="color:var(--gold)">H₂ N₂ O₂ F₂ Cl₂ Br₂ I₂</b> (HOFBrINCl). Write them this way whenever they appear <i>alone</i>. In a compound, use the ion: NaCl, not NaCl₂.</p>
+  <h3>Common ion charges</h3>
+  <div class="ions-grid" id="refIons"></div>
+  <p class="hint">Cross the charge numbers to get subscripts, then reduce: Al³⁺ + O²⁻ → Al₂O₃. Put a polyatomic ion in parentheses if you need more than one: Ca₃(PO₄)₂.</p>
+</aside>
+
+<footer>
+  <span>Reactions follow the Types of Chemical Reactions POGIL, the Types of Reactions Lab and the Predicting Reaction Products worksheet. Lab results are simulated.</span>
+  <span class="row"><button id="saveBtn">Save code (switch devices)</button><button id="resetBtn">Reset my progress</button></span>
+</footer>
+<div id="savePanel" hidden>
+  <div class="card">
+    <h3>Save code <small>Copy this code to continue on another Chromebook, or paste a code to load it</small></h3>
+    <textarea id="saveCode" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn sm" id="copyCode">Copy my code</button><button class="btn sm ghost" id="loadCode">Load pasted code</button><span class="hint" id="saveFb" style="margin:0"></span></div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ok=t=>`<span style="color:var(--good)">${t}</span>`, bad=t=>`<span style="color:var(--bad)">${t}</span>`;
+const mark=(el,v)=>{el.classList.toggle('ok',!!v);el.classList.toggle('no',!v)};
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+
+/* ---------- formulas & equations ---------- */
+const SYM=new Set('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La W Pt Au Hg Tl Pb Bi Rn Fr Ra U'.split(' '));
+const DIA=['H','N','O','F','Cl','Br','I'];
+const fmtF=f=>esc(f).replace(/([A-Za-z\)])(\d+)/g,'$1<sub>$2</sub>');
+function parseF(f){
+  const st=[{}];let i=0;
+  while(i<f.length){const ch=f[i];
+    if(ch==='('){st.push({});i++;}
+    else if(ch===')'){i++;let n='';while(/\d/.test(f[i]||''))n+=f[i++];if(st.length<2)throw new Error('paren');const g=st.pop(),t=st[st.length-1];for(const k in g)t[k]=(t[k]||0)+g[k]*(n?+n:1);}
+    else if(/[A-Z]/.test(ch)){let s=ch;i++;while(/[a-z]/.test(f[i]||''))s+=f[i++];if(!SYM.has(s))throw new Error('sym:'+s);let n='';while(/\d/.test(f[i]||''))n+=f[i++];const t=st[st.length-1];t[s]=(t[s]||0)+(n?+n:1);}
+    else throw new Error('char');}
+  if(st.length!==1)throw new Error('paren');
+  return st[0];
+}
+const isEl=f=>{try{return Object.keys(parseF(f)).length===1}catch(e){return false}};
+function parseEq(s){
+  const [L,R]=s.split('->');
+  const side=x=>x.trim().split(' + ').map(t=>{t=t.trim();const m=t.match(/^(\d*)(.+?)(\((s|l|g|aq)\))?$/);return {c:m[1]?+m[1]:1,f:m[2],ph:m[4]||''}});
+  return {r:side(L),p:R&&R.trim()?side(R):[]};
+}
+const term=t=>`${t.c>1?t.c:''}${fmtF(t.f)}${t.ph?`<small style="color:var(--muted)">(${t.ph})</small>`:''}`;
+function fmtEq(s){const e=parseEq(s);return e.r.map(term).join(' + ')+(s.includes('->')?' <span class="arr">→</span> '+(e.p.length?e.p.map(term).join(' + '):'?'):'');}
+const fmtSide=s=>s.split(' + ').map(t=>term(parseEq(t).r[0])).join(' + ');
+function mkEq(s,type,extra={}){const e=parseEq(s);return {s,type,r:e.r.map(t=>t.f),p:e.p.map(t=>t.f),c:[...e.r,...e.p].map(t=>t.c),...extra};}
+function counts(fs,cs){const m={};fs.forEach((f,i)=>{const a=parseF(f);for(const k in a)m[k]=(m[k]||0)+a[k]*cs[i]});return m;}
+function isBalanced(r,p,c){const L=counts(r,c.slice(0,r.length)),R=counts(p,c.slice(r.length));const k=new Set([...Object.keys(L),...Object.keys(R)]);for(const x of k)if(L[x]!==R[x])return false;return true;}
+const solveCache={};
+function solve(r,p){
+  const key=r.join('+')+'>'+p.join('+');if(key in solveCache)return solveCache[key];
+  const sp=[...r,...p],A=sp.map(parseF),n=sp.length,els=[...new Set(A.flatMap(a=>Object.keys(a)))];
+  const max=n<=3?30:n===4?26:12,c=Array(n).fill(1);
+  const good=()=>els.every(e=>{let s=0;for(let i=0;i<n;i++){const v=(A[i][e]||0)*c[i];s+=i<r.length?v:-v}return s===0});
+  const rec=i=>{if(i===n)return good();for(let v=1;v<=max;v++){c[i]=v;if(rec(i+1))return true}return false};
+  return solveCache[key]=rec(0)?[...c]:null;
+}
+const TYPES={syn:'synthesis',dec:'decomposition',sr:'single replacement',dr:'double replacement',comb:'combustion'};
+const TORDER=['syn','dec','sr','dr','comb'];
+const TYPEHINT={
+  syn:'Synthesis: the reactants join into <b>one</b> product. Combine the cation and anion and balance their charges.',
+  dec:'Decomposition: one compound breaks apart, usually into its elements. Remember the diatomic elements.',
+  sr:'Single replacement: the lone element trades places with the ion of the same kind. A metal replaces the cation (or H); a halogen replaces the anion.',
+  dr:'Double replacement: the two cations switch anion partners. Rebalance the charges in each new compound.',
+  comb:'Combustion: a hydrocarbon (C, H, sometimes O) burns in O₂ and always makes CO₂ and H₂O.'};
+
+/* ---------- ions ---------- */
+const CAT={Na:1,K:1,Li:1,Ag:1,NH4:1,H:1,Mg:2,Ca:2,Ba:2,Zn:2,Cu:2,Pb:2,Sr:2,Fe:3,Al:3,Cr:3};
+const AN={F:1,Cl:1,Br:1,I:1,OH:1,NO3:1,C2H3O2:1,MnO4:1,O:2,S:2,SO4:2,CO3:2,CrO4:2,N:3,PO4:3};
+const POLY=new Set(['NH4','OH','NO3','C2H3O2','MnO4','SO4','CO3','CrO4','PO4']);
+const supQ=(q,sign)=>`<sup>${q>1?q:''}${sign}</sup>`;
+const catH=s=>fmtF(s)+supQ(CAT[s],'+'), anH=s=>fmtF(s)+supQ(AN[s],'−');
+function compound(c,a){const qc=CAT[c],qa=AN[a],g=gcd(qc,qa),nc=qa/g,na=qc/g;const part=(s,n)=>n===1?s:(POLY.has(s)?'('+s+')'+n:s+n);return part(c,nc)+part(a,na);}
+
+/* ---------- product-prediction checker ---------- */
+const SUBD={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
+const normF=s=>String(s).replace(/[₀-₉]/g,c=>SUBD[c]).replace(/[\s·]/g,'');
+function splitTerms(raw){
+  let s=String(raw).replace(/[₀-₉]/g,c=>SUBD[c]);
+  if(/->|→|=/.test(s))s=s.split(/->|→|=/).pop();
+  return s.split('+').map(t=>t.replace(/\((s|l|g|aq)\)/gi,'').replace(/\s/g,'').replace(/^\d+/,'')).filter(Boolean).map(t=>t==='HOH'?'H2O':t);
+}
+const sameMulti=(a,b)=>a.length===b.length&&[...a].sort().join('|')===[...b].sort().join('|');
+const elSet=f=>{try{return Object.keys(parseF(f)).sort().join(',')}catch(e){return ''}};
+const sameAtoms=(a,b)=>{try{const A=parseF(a),B=parseF(b);const k=new Set([...Object.keys(A),...Object.keys(B)]);for(const x of k)if(A[x]!==B[x])return false;return true}catch(e){return false}};
+function checkPred(raw,P){ // P: {r:[...], sets:[[...],...], type}
+  const T=splitTerms(raw);
+  if(!T.length)return {ok:false,msg:'Type the product formula(s) first.'};
+  for(const t of T){
+    try{parseF(t)}catch(e){
+      const m=String(e.message);
+      if(m.startsWith('sym:'))return {ok:false,msg:`<b>${esc(m.slice(4))}</b> is not an element symbol. Each symbol starts with a capital letter and any second letter is lowercase (Cl, not CL or cl).`};
+      return {ok:false,msg:`I can't read <b>${esc(t)}</b>. Check the letters and parentheses.`};
+    }
+  }
+  for(const set of P.sets)if(sameMulti(T,set))return {ok:true,set};
+  const E=P.sets.find(s=>s.length===T.length)||P.sets[0];
+  for(const t of T){
+    if(P.r.includes(t)&&!E.includes(t))return {ok:false,msg:`<b>${fmtF(t)}</b> is one of the reactants. Products must be new substances.`};
+    const bare=t.replace(/\d+$/,'');
+    if(DIA.includes(t)&&E.includes(t+'2'))return {ok:false,msg:`Elemental ${t} is <b>diatomic</b>. When it stands alone, write <b>${fmtF(t+'2')}</b>.`};
+    if(isEl(t)&&t!==bare&&E.includes(bare)&&!DIA.includes(bare))return {ok:false,msg:`${bare} is not diatomic. Write the element as a single atom: <b>${esc(bare)}</b>.`};
+  }
+  const missing=E.filter(e=>!T.includes(e)),extra=T.filter(t=>!E.includes(t));
+  for(const t of extra){
+    const m=missing.find(e=>sameAtoms(e,t));
+    if(m)return {ok:false,msg:`<b>${fmtF(t)}</b> has the right atoms, but write it the standard way: cation (or metal) first, with any polyatomic ion kept together in parentheses.`};
+  }
+  if(P.type==='comb')return {ok:false,msg:'Complete combustion of a hydrocarbon always makes the same two products: carbon dioxide and water. Write their formulas.'};
+  for(const t of extra){
+    const m=missing.find(e=>elSet(e)===elSet(t));
+    if(m)return {ok:false,msg:`<b>${fmtF(t)}</b> has the right elements, but the subscripts don't balance the charges. Write each ion's charge, then use subscripts so the total is zero.`};
+  }
+  if(T.length!==E.length)return {ok:false,msg:`This reaction makes <b>${E.length}</b> product${E.length>1?'s':''}. You wrote ${T.length}. ${TYPEHINT[P.type]}`};
+  return {ok:false,msg:'Not quite. '+TYPEHINT[P.type]};
+}
+function fPreview(inp,out){const u=()=>{const T=splitTerms(inp.value);out.innerHTML=T.length?T.map(fmtF).join(' + '):'&nbsp;'};inp.addEventListener('input',u);u();}
+
+/* ---------- state ---------- */
+const KEY='prl-progress-v1';
+const DEF={s1:{sort:false,pat:false,phase:false,cp:false},s2:{flow:0,seen:[],cp:false},s3:{swap:0,mc:0,cp:false},
+  s4:{dia:false,charge:0,err:0,cp:false},s5:{bal:[],pipe:0,cp:false},s6:{labs:{},ppt:false,cp:false},finalPassed:false,finalScore:null,cert:null};
+const clone=o=>JSON.parse(JSON.stringify(o));
+function merge(d,s){const o=clone(d);if(s&&typeof s==='object')for(const k in s){if(o[k]&&typeof o[k]==='object'&&!Array.isArray(o[k])&&Object.keys(o[k]).length)o[k]=merge(o[k],s[k]);else o[k]=s[k];}return o;}
+let S=clone(DEF);
+try{const raw=localStorage.getItem(KEY);if(raw)S=merge(DEF,JSON.parse(raw));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const labsDone=()=>Object.values(S.s6.labs).filter(l=>l&&l.obs&&l.type&&l.bal).length;
+const done=[null,
+  ()=>S.s1.sort&&S.s1.pat&&S.s1.phase&&S.s1.cp,
+  ()=>S.s2.flow>=10&&S.s2.cp,
+  ()=>S.s3.swap>=4&&S.s3.mc>=6&&S.s3.cp,
+  ()=>S.s4.dia&&S.s4.charge>=6&&S.s4.err>=4&&S.s4.cp,
+  ()=>S.s5.bal.length>=6&&S.s5.pipe>=5&&S.s5.cp,
+  ()=>labsDone()>=6&&S.s6.cp,
+  ()=>S.finalPassed];
+const allStations=()=>[1,2,3,4,5,6].every(i=>done[i]());
+
+/* ---------- drag & drop engine (mouse + touch, plus tap-to-place) ---------- */
+let selChip=null;
+function clearSel(){if(selChip){selChip.classList.remove('sel');selChip=null}}
+function zoneAt(x,y){const el=document.elementFromPoint(x,y);return el?el.closest('.zone,.slot'):null}
+function drag(el){
+  el.addEventListener('pointerdown',e=>{
+    if(el.classList.contains('locked')||e.button>0) return;
+    e.preventDefault();e.stopPropagation();
+    const sx=e.clientX,sy=e.clientY;let ghost=null,over=null;
+    const mv=ev=>{
+      if(!ghost&&Math.hypot(ev.clientX-sx,ev.clientY-sy)>6){ghost=el.cloneNode(true);ghost.classList.add('dragghost');ghost.classList.remove('sel');document.body.appendChild(ghost);el.classList.add('dragging');clearSel();}
+      if(ghost){ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';const z=zoneAt(ev.clientX,ev.clientY);if(z!==over){over&&over.classList.remove('over');over=z;over&&over.classList.add('over');}}
+    };
+    const up=ev=>{
+      window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
+      over&&over.classList.remove('over');
+      if(ghost){ghost.remove();el.classList.remove('dragging');const z=zoneAt(ev.clientX,ev.clientY);if(z&&z._drop)z._drop(el);}
+      else{ if(selChip&&selChip!==el){const z=el.closest('.zone,.slot');if(z&&z._drop){const c=selChip;clearSel();z._drop(c);return;}} if(selChip===el){clearSel();}else{clearSel();selChip=el;el.classList.add('sel');} }
+    };
+    window.addEventListener('pointermove',mv);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+  });
+}
+function zone(el,fn){el._drop=fn;el.addEventListener('click',e=>{if(selChip&&e.target.closest('.chip')!==selChip){const c=selChip;clearSel();fn(c);}});}
+function chip(html,payload,cls=''){const el=document.createElement('div');el.className='chip '+cls;el.innerHTML='<span>'+html+'</span>';el._p=payload;drag(el);return el;}
+const shake=el=>{el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');setTimeout(()=>el.classList.remove('shake'),400)};
+
+function sortActivity({bank,bins,items,onDone,doneFlag,fb,btn}){
+  const B=$(bank),Z=bins.map(b=>$(b)),F=$(fb);
+  B.innerHTML='';Z.forEach(z=>z.innerHTML='');
+  if(doneFlag()){items.forEach(it=>{const c=chip(it.h,it,it.cls||'');c.classList.add('locked');Z[it.bin].appendChild(c)});F.innerHTML=ok('✓ Sorted correctly.');return;}
+  shuffle(items).forEach(it=>B.appendChild(chip(it.h,it,it.cls||'')));
+  [B,...Z].forEach(z=>zone(z,c=>{z.appendChild(c);}));
+  $(btn).onclick=()=>{
+    if(B.querySelector('.chip')){F.textContent='Sort every card into a box first.';return}
+    let wrong=[];
+    Z.forEach((z,bi)=>z.querySelectorAll('.chip').forEach(c=>{if(c._p.bin===bi)c.classList.add('locked');else wrong.push(c);}));
+    if(!wrong.length){F.innerHTML=ok('✓ All sorted correctly!');onDone();return}
+    wrong.forEach(c=>{shake(c);B.appendChild(c)});
+    const w=wrong[0]._p;
+    F.innerHTML=`${bad(`${wrong.length} card${wrong.length>1?'s were':' was'} in the wrong box and went back to the bank.`)} ${w.why?'Hint: '+w.why:''}`;
+  };
+}
+
+/* ---------- navigation ---------- */
+let curSt=1;const onShow={};
+function show(n){
+  curSt=n;
+  $$('.station').forEach(s=>s.classList.toggle('show',s.id==='st'+n));
+  $$('#nav button').forEach(b=>b.classList.toggle('cur',+b.dataset.st===n));
+  Object.values(onShow).forEach(f=>f(n));
+  if(n===7) renderFinal();
+  if(n===8) renderCert();
+  try{history.replaceState(null,'','#station-'+n)}catch(e){}
+  window.scrollTo({top:0});
+}
+$$('#nav button').forEach(b=>b.onclick=()=>show(+b.dataset.st));
+
+function refresh(){
+  const d=[1,2,3,4,5,6,7].map(i=>done[i]());d.push(!!S.cert);
+  $$('#nav button').forEach((b,i)=>b.classList.toggle('done',d[i]));
+  $('#nav button[data-st="7"]').classList.toggle('locked',!allStations());
+  $('#nav button[data-st="8"]').classList.toggle('locked',!(allStations()&&S.finalPassed));
+  const T=(el,items)=>{$(el).innerHTML='<div class="tt">Station tasks</div>'+items.map(([t,o,opt])=>`<li class="${o?'ok':''} ${opt?'opt':''}">${t}</li>`).join('')};
+  const a=S.s1,b=S.s2,c=S.s3,e=S.s4,f=S.s5,g=S.s6,L=labsDone();
+  T('#tasks1',[['Sort the Model 1 reactions',a.sort],['Match patterns &amp; descriptions',a.pat],['Phase notation',a.phase],['Complete Checkpoint 1',a.cp]]);
+  T('#tasks2',[[`Identify 10 reactions (${Math.min(b.flow,10)}/10)`,b.flow>=10],['Complete Checkpoint 2',b.cp]]);
+  T('#tasks3',[[`Partner Swap: build 4 (${Math.min(c.swap,4)}/4)`,c.swap>=4],[`Type → Predict: 6 correct (${Math.min(c.mc,6)}/6)`,c.mc>=6],['Complete Checkpoint 3',c.cp]]);
+  T('#tasks4',[['Sort the diatomic elements',e.dia],[`Balance 6 compounds (${Math.min(e.charge,6)}/6)`,e.charge>=6],[`Fix 4 errors (${Math.min(e.err,4)}/4)`,e.err>=4],['Complete Checkpoint 4',e.cp]]);
+  T('#tasks5',[[`Balance 6 equations (${Math.min(f.bal.length,6)}/6)`,f.bal.length>=6],[`Predict → Balance: 5 (${Math.min(f.pipe,5)}/5)`,f.pipe>=5],['Complete Checkpoint 5',f.cp]]);
+  T('#tasks6',[[`Complete all 6 lab reactions (${L}/6)`,L>=6],['Extension: precipitates',g.ppt,true],['Complete Checkpoint 6',g.cp]]);
+}
+
+/* ---------- checkpoint component ---------- */
+function checkpoint(el,qs,st){
+  el=$(el);el.innerHTML='';
+  if(S[st].cp){const b=document.createElement('div');b.className='banner';b.textContent='✓ Checkpoint complete. You can still review the questions below.';el.appendChild(b);}
+  const got=new Set();
+  qs.forEach((q,qi)=>{
+    const d=document.createElement('div');d.className='q';
+    d.innerHTML=`<p class="qp"><b>${qi+1}.</b> ${q.q}</p><div class="opts"></div><div class="fb"></div>`;
+    shuffle(q.o.map((o,i)=>i)).forEach(oi=>{
+      const b=document.createElement('button');b.className='opt';b.innerHTML=q.o[oi];
+      b.onclick=()=>{
+        if(d.classList.contains('right'))return;
+        if(oi===0){b.classList.add('ok');d.classList.add('right');d.querySelector('.fb').innerHTML='✓ '+q.e;got.add(qi);
+          if(got.size===qs.length&&!S[st].cp){S[st].cp=true;save();refresh();const bn=document.createElement('div');bn.className='banner';bn.textContent='✓ Checkpoint complete!';el.prepend(bn);}}
+        else{b.classList.add('no');b.disabled=true;d.querySelector('.fb').innerHTML='✗ Not quite. '+(q.h||'Look back at the activities above and try again.');}
+      };
+      d.querySelector('.opts').appendChild(b);
+    });
+    el.appendChild(d);
+  });
+}
+
+/* ---------- balancer component ---------- */
+function balancer(root,r,p,{onDone,doneAlready=false,label=''}={}){
+  const sp=[...r,...p],co=sp.map(()=>1),A=sp.map(parseF);
+  const els=[...new Set(A.flatMap(a=>Object.keys(a)))];
+  let tries=0,solved=doneAlready;
+  if(solved){const s=solve(r,p);if(s)s.forEach((v,i)=>co[i]=v);}
+  root.innerHTML=`<div class="bal">${label}<div class="balrow"></div><table class="tally"><thead><tr><th>Element</th><th>Reactants</th><th></th><th>Products</th><th></th></tr></thead><tbody></tbody></table>
+    <div class="row" style="margin-top:8px"><button class="btn sm" data-k="chk">Check</button><button class="btn ghost sm" data-k="rst">Reset to 1s</button><span class="hint" data-k="fb" style="margin:0"></span></div></div>`;
+  const row=root.querySelector('.balrow'),tb=root.querySelector('tbody'),fb=root.querySelector('[data-k="fb"]');
+  function draw(){
+    row.innerHTML=sp.map((f,i)=>`${i===r.length?'<span class="arr">→</span>':(i?'<span class="op">+</span>':'')}<span class="sp"><span class="cf"><button data-u="${i}" aria-label="increase">▲</button><b>${co[i]}</b><button data-d="${i}" aria-label="decrease">▼</button></span><span>${fmtF(f)}</span></span>`).join('');
+    const L=counts(r,co.slice(0,r.length)),R=counts(p,co.slice(r.length)),mx=Math.max(1,...els.map(e=>Math.max(L[e]||0,R[e]||0)));
+    tb.innerHTML=els.map(e=>{const l=L[e]||0,q=R[e]||0,g=l===q;return `<tr><td class="mono"><b>${e}</b></td><td><span class="barL" style="width:${8+90*l/mx}px"></span> <span class="mono">${l}</span></td><td></td><td><span class="barR" style="width:${8+90*q/mx}px"></span> <span class="mono">${q}</span></td><td class="st" style="color:${g?'var(--good)':'var(--bad)'}">${g?'✓':'≠'}</td></tr>`}).join('');
+    row.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{if(solved)return;const i=+b.dataset.u;co[i]=Math.min(30,co[i]+1);draw()});
+    row.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{if(solved)return;const i=+b.dataset.d;co[i]=Math.max(1,co[i]-1);draw()});
+  }
+  draw();
+  const chk=root.querySelector('[data-k="chk"]');
+  if(solved){fb.innerHTML=ok('✓ Balanced.');chk.disabled=true;return;}
+  root.querySelector('[data-k="rst"]').onclick=()=>{if(solved)return;co.fill(1);draw();fb.textContent=''};
+  chk.onclick=()=>{
+    if(isBalanced(r,p,co)){
+      const g=co.reduce((a,b)=>gcd(a,b));
+      if(g>1){fb.innerHTML=bad(`Balanced, but every coefficient can be divided by ${g}. Use the lowest whole numbers.`);return}
+      solved=true;fb.innerHTML=ok('✓ Balanced! Atoms are conserved on both sides.');chk.disabled=true;onDone&&onDone(co.slice());return;}
+    tries++;
+    const L=counts(r,co.slice(0,r.length)),R=counts(p,co.slice(r.length));
+    const off=els.filter(e=>(L[e]||0)!==(R[e]||0));
+    let m=`${bad('Not balanced yet.')} Still off: <b>${off.join(', ')}</b>. `;
+    m+=off.includes('O')&&off.length>1?'Tip: balance oxygen (and hydrogen) last; start with the metal or carbon.':'Change one coefficient at a time and watch the tally.';
+    if(tries>=3){const s=solve(r,p);if(s)m+=` <button class="btn ghost sm" data-k="ans">Show the answer</button>`;}
+    fb.innerHTML=m;
+    const a=fb.querySelector('[data-k="ans"]');if(a)a.onclick=()=>{const s=solve(r,p);s.forEach((v,i)=>co[i]=v);draw();fb.innerHTML='Answer shown. Study the tally, then click <b>Check</b> to continue.';};
+  };
+}
+
+/* ---------- lab flowchart questions ---------- */
+const hasO2=e=>e.r.includes('O2');
+const FLOWQ=[
+  {t:'Is O₂ a reactant, with CO₂ and H₂O as the products?',y:'combustion',k:'comb',test:e=>hasO2(e)&&e.p.includes('CO2')&&e.p.includes('H2O'),
+    yes:'O₂ reacts and the products are CO₂ and H₂O.',no:'Combustion needs O₂ as a reactant <i>and</i> both CO₂ and H₂O as products.'},
+  {t:'Do two or more reactants combine to form only <b>one</b> product?',y:'synthesis',k:'syn',test:e=>e.r.length>=2&&e.p.length===1,
+    yes:'Count the products: just one.',no:'Count the products. Synthesis has exactly one.'},
+  {t:'Does <b>one</b> reactant break apart into two or more products?',y:'decomposition',k:'dec',test:e=>e.r.length===1&&e.p.length>=2,
+    yes:'There is only one reactant, and it falls apart.',no:'Count the reactants. Decomposition starts with exactly one.'},
+  {t:'Is there an element by itself (only one kind of atom) on <b>both</b> sides?',y:'single replacement',k:'sr',test:e=>e.r.some(isEl)&&e.p.some(isEl),
+    yes:'A lone element goes in, and a different lone element comes out.',no:'Look for a substance with only one kind of atom (like Zn, Cl₂ or H₂) on each side.'}];
+const classify=e=>{for(const q of FLOWQ)if(q.test(e))return q.k;return 'dr'};
+
+/* ========== REFERENCE DRAWER ========== */
+(function(){
+  $('#refTypes').innerHTML='<thead><tr><th>Type</th><th>Pattern</th><th>Example</th></tr></thead><tbody>'+
+    [['Synthesis','A + B → AB','2Na + Cl2 -> 2NaCl'],['Decomposition','AB → A + B','2H2O -> 2H2 + O2'],['Single replacement','A + BC → AC + B','Zn + CuSO4 -> ZnSO4 + Cu'],
+     ['Double replacement','AB + CD → AD + CB','AgNO3 + NaCl -> AgCl + NaNO3'],['Combustion','CₓHᵧ + O₂ → CO₂ + H₂O','CH4 + 2O2 -> CO2 + 2H2O']]
+    .map(r=>`<tr><td>${r[0]}</td><td class="mono">${r[1]}</td><td class="mono">${fmtEq(r[2])}</td></tr>`).join('')+'</tbody>';
+  $('#refFlow').innerHTML=FLOWQ.map(q=>`<li>${q.t} <b>→ ${q.y}</b></li>`).join('')+'<li>No to all? <b>→ double replacement</b></li>';
+  const cats=['Na','K','Ag','NH4','Mg','Ca','Ba','Zn','Cu','Pb','Fe','Al'],ans=['Cl','Br','OH','NO3','C2H3O2','MnO4','O','S','SO4','CO3','CrO4','PO4'];
+  $('#refIons').innerHTML='<div class="h" style="grid-column:span 6;text-align:left">Cations (+)</div>'+cats.map(s=>`<div class="c">${catH(s)}</div>`).join('')+
+    '<div class="h" style="grid-column:span 6;text-align:left;margin-top:6px">Anions (−)</div>'+ans.map(s=>`<div class="a">${anH(s)}</div>`).join('');
+  $('#chartBtn').onclick=()=>$('#drawer').classList.add('open');
+  $('#drawerClose').onclick=()=>$('#drawer').classList.remove('open');
+})();
+
+/* ===================== STATION 1 ===================== */
+const M1=[
+  ...['4Fe + 3O2 -> 2Fe2O3','N2 + 3H2 -> 2NH3','MgO + H2O -> Mg(OH)2','SO3 + H2O -> H2SO4'].map(s=>({s,bin:0,why:'Two or more reactants, only one product: synthesis.'})),
+  ...['MgCO3 -> MgO + CO2','2H2O -> 2H2 + O2','2KClO3 -> 2KCl + 3O2','(NH4)2CO3 -> 2NH3 + H2O + CO2'].map(s=>({s,bin:1,why:'Only one reactant, breaking into smaller pieces: decomposition.'})),
+  ...['2FeCl3 + 3Zn -> 2Fe + 3ZnCl2','Mg + CuSO4 -> MgSO4 + Cu','2Al + 6HCl -> 2AlCl3 + 3H2','Cl2 + 2NaBr -> 2NaCl + Br2'].map(s=>({s,bin:2,why:'One lone element in, a different lone element out: single replacement.'})),
+  ...['AgNO3 + NaCl -> AgCl + NaNO3','Na2CO3 + CaCl2 -> CaCO3 + 2NaCl','HCl + NaOH -> H2O + NaCl','FeBr3 + K3PO4 -> FePO4 + 3KBr'].map(s=>({s,bin:3,why:'Two compounds in, two compounds out, with partners switched: double replacement.'})),
+  ...['CH4 + 2O2 -> CO2 + 2H2O','2C4H10 + 13O2 -> 8CO2 + 10H2O','2C8H18 + 25O2 -> 16CO2 + 18H2O','C10H8 + 12O2 -> 10CO2 + 4H2O'].map(s=>({s,bin:4,why:'A hydrocarbon plus O₂ making CO₂ and H₂O: combustion.'}))
+].map(x=>({...x,h:fmtEq(x.s),cls:'eq'}));
+sortActivity({bank:'#m1Bank',bins:[0,1,2,3,4].map(i=>'#m1b'+i),items:M1,doneFlag:()=>S.s1.sort,fb:'#m1Fb',btn:'#m1Chk',onDone:()=>{S.s1.sort=true;save();refresh();}});
+
+const PAT=[['A + B → AB','Two or more substances combine to form one product.'],['AB → A + B','One compound breaks into elements or smaller compounds.'],
+  ['A + BC → AC + B','A lone element replaces part of an ionic compound.'],['AB + CD → AD + CB','Ionic compounds dissolved in water switch partners.'],
+  ['CₓHᵧ + O₂ → CO₂ + H₂O','A hydrocarbon burns in oxygen, making carbon dioxide and water.']];
+const PATI=PAT.flatMap(([p,d],i)=>[{h:p,bin:i,cls:'',why:'Read the pattern: count what goes in and what comes out.'},{h:d,bin:i,cls:'word',why:'Match each description to the meaning of the type\'s name: synthesis = put together, decomposition = break down, replacement = swap.'}]);
+sortActivity({bank:'#patBank',bins:[0,1,2,3,4].map(i=>'#pat'+i),items:PATI,doneFlag:()=>S.s1.pat,fb:'#patFb',btn:'#patChk',onDone:()=>{S.s1.pat=true;save();refresh();}});
+
+(function(){
+  const P=[['(s)','solid'],['(l)','liquid'],['(g)','gas'],['(aq)','dissolved in water']];
+  $('#phaseRow').innerHTML=P.map(([s],i)=>`<label class="row" style="gap:6px"><b class="mono" style="font-size:17px">${s}</b><select class="fill" data-i="${i}" style="font-family:var(--sans)"><option value="">choose…</option>${shuffle(P.map(x=>x[1])).map(o=>`<option>${o}</option>`).join('')}</select></label>`).join('');
+  const sel=i=>$(`#phaseRow select[data-i="${i}"]`);
+  if(S.s1.phase){P.forEach((x,i)=>{sel(i).value=x[1];sel(i).classList.add('ok')});$('#phaseFb').innerHTML=ok('✓ Correct.');}
+  $('#phaseChk').onclick=()=>{let w=0;P.forEach((x,i)=>{const g=sel(i).value===x[1];mark(sel(i),g);if(!g)w++});
+    if(!w){$('#phaseFb').innerHTML=ok('✓ (aq) stands for <i>aqueous</i>, from the Latin word for water. Ions in (aq) solutions are free to switch partners.');if(!S.s1.phase){S.s1.phase=true;save();refresh();}}
+    else $('#phaseFb').innerHTML=bad(`${w} to fix.`)+' Hint: (aq) is short for “aqueous.”';};
+})();
+
+checkpoint('#cp1',[
+  {q:'Can two <b>elements</b> be the reactants in a synthesis reaction?',o:['Yes. For example, N₂ + 3H₂ → 2NH₃','No, synthesis always starts with compounds','Only if both elements are metals'],e:'4Fe + 3O₂ → 2Fe₂O₃ and N₂ + 3H₂ → 2NH₃ both start with two elements.'},
+  {q:'Can two <b>compounds</b> combine in a synthesis reaction?',o:['Yes. For example, SO₃ + H₂O → H₂SO₄','No, only elements can combine','Only in combustion'],e:'MgO + H₂O → Mg(OH)₂ and SO₃ + H₂O → H₂SO₄ are synthesis reactions of compounds.'},
+  {q:'What kinds of substances are the products of decomposition reactions?',o:['Elements or smaller compounds','Always exactly two elements','One larger compound'],e:'2H₂O → 2H₂ + O₂ makes elements; MgCO₃ → MgO + CO₂ makes smaller compounds.'},
+  {q:'In Mg + CuSO₄ → MgSO₄ + Cu, what happens to the charges?',o:['Mg goes from 0 to 2+, and Cu goes from 2+ to 0','No atom changes its charge','SO₄ changes from 2− to 0','Both metals lose their charge'],e:'In single replacement, the lone element becomes an ion, and the ion it replaces becomes a neutral element.'},
+  {q:'In a double replacement reaction, do the ions change their charges?',o:['No, the ions just switch partners','Yes, cations become anions','Yes, every ion gains one electron'],e:'Ag⁺ stays Ag⁺ and Cl⁻ stays Cl⁻ in AgNO₃ + NaCl → AgCl + NaNO₃.'},
+  {q:'Write 2SO₂ + O₂ → 2SO₃ in reverse: 2SO₃ → 2SO₂ + O₂. What type is the reverse reaction?',o:['decomposition','synthesis','single replacement','combustion'],e:'The reverse of a synthesis reaction is a decomposition reaction.'}],'s1');
+
+/* ===================== STATION 2 ===================== */
+const FLOW=[
+  ['NaOH + KNO3 -> NaNO3 + KOH','Lab #1'],['CH4 + 2O2 -> CO2 + 2H2O','Lab #2'],['2Fe + 6NaBr -> 2FeBr3 + 6Na','Lab #3'],['CaSO4 + Mg(OH)2 -> Ca(OH)2 + MgSO4','Lab #4'],
+  ['NH4OH + HBr -> H2O + NH4Br','Lab #5'],['Pb + O2 -> PbO2','Lab #6'],['Na2CO3 -> Na2O + CO2','Lab #7'],['Zn + 2HCl -> ZnCl2 + H2','Lab #8'],['Ca(OH)2 -> CaO + H2O','Lab #9'],
+  ['BaCl2 + Na2SO4 -> 2NaCl + BaSO4','Lab #10'],['K2O + H2O -> 2KOH','POGIL Q13'],['2MgCl2 + Na2CO3 -> 2NaCl + MgCO3','POGIL Q13'],['2Al2O3 -> 4Al + 3O2','POGIL Q13'],
+  ['Cu(NO3)2 + Zn -> Cu + Zn(NO3)2','POGIL Q13'],['H2SO4 + 2NaOH -> Na2SO4 + 2H2O','POGIL Q13'],['2K + 2H2O -> 2KOH + H2','POGIL Q13'],['2O2 + N2 -> N2O4','POGIL Q13'],
+  ['2NaF -> 2Na + F2','POGIL Q13'],['2C2H6 + 7O2 -> 4CO2 + 6H2O','Model 2'],
+  ['2C8H18 + 25O2 -> 16CO2 + 18H2O','Model 2'],['2Na + Cl2 -> 2NaCl','POGIL Q18'],['2KClO3 -> 2KCl + 3O2','POGIL Model 1'],['Cl2 + 2KI -> 2KCl + I2','Practice'],
+  ['Pb(NO3)2 + 2KI -> PbI2 + 2KNO3','Practice'],['2HgO -> 2Hg + O2','Lab: decomposition'],['C3H8 + 5O2 -> 3CO2 + 4H2O','Practice'],['Mg + 2AgNO3 -> Mg(NO3)2 + 2Ag','Practice'],
+  ['4Al + 3O2 -> 2Al2O3','Practice'],['3NaOH + FeCl3 -> Fe(OH)3 + 3NaCl','Lab 4'],['CaCO3 -> CaO + CO2','Lab: decomposition'],['P2O5 + 3H2O -> 2H3PO4','POGIL Q17'],
+  ['2AgNO3 + Na2CO3 -> Ag2CO3 + 2NaNO3','Worksheet p. 2'],['C6H12O6 + 6O2 -> 6CO2 + 6H2O','POGIL Q23'],['F2 + 2LiBr -> 2LiF + Br2','POGIL Q15'],['2H2O2 -> 2H2O + O2','Worksheet #11']].map(([s,src])=>({...mkEq(s),src}));
+FLOW.forEach(e=>e.type=classify(e));
+const elOf=fs=>fs.find(isEl);
+function idWhy(e){
+  const t=e.type;
+  if(t==='syn')return `${e.r.length} reactants combine into <b>one</b> product.`;
+  if(t==='dec')return `<b>One</b> reactant breaks apart into ${e.p.length} products.`;
+  if(t==='sr')return `The lone element ${fmtF(elOf(e.r))} goes in, and a different lone element, ${fmtF(elOf(e.p))}, comes out.`;
+  if(t==='comb')return `${fmtF(e.r.find(f=>f!=='O2'))} burns in O₂ and makes CO₂ and H₂O.`;
+  return 'Two compounds switch partners. There is no lone element and no combustion.';
+}
+function idNot(e,k){
+  if(k==='syn')return `Synthesis makes only one product. This reaction makes ${e.p.length}.`;
+  if(k==='dec')return `Decomposition starts with one reactant. This reaction has ${e.r.length}.`;
+  if(k==='sr')return e.r.some(isEl)&&e.p.some(isEl)?'Look at how many products there are.':'Single replacement needs a lone element on <b>both</b> sides. Do you see one on each side?';
+  if(k==='comb')return 'Combustion needs O₂ as a reactant and makes both CO₂ and H₂O.';
+  return (e.r.some(isEl)||e.p.some(isEl))?`Double replacement has no lone elements, but this one has ${fmtF(elOf(e.r)||elOf(e.p))}.`:'Count the reactants and the products again.';
+}
+(function(){
+  const root=$('#flow2');let order=[],qi=0;
+  const refill=()=>{const un=FLOW.filter(e=>!S.s2.seen.includes(e.s)),sn=FLOW.filter(e=>S.s2.seen.includes(e.s));order=[...shuffle(un),...shuffle(sn)];qi=0;};
+  refill();
+  function start(){if(qi>=order.length)refill();draw(order[qi++]);}
+  function draw(e){
+    let missed=false,doneQ=false;
+    root.innerHTML=`<div class="prob"><div class="hint" style="margin-top:0">${e.src}</div><div class="eqbig">${fmtEq(e.s)}</div>
+      <div class="step">What type of reaction is this?</div><div class="tbtns" id="idT">${TORDER.map(k=>`<button data-k="${k}">${TYPES[k]}</button>`).join('')}</div>
+      <div class="msg" hidden id="idMsg"></div><div class="counter-pill" id="idPill"></div></div>`;
+    const pill=()=>$('#idPill').textContent=`Correct on first try: ${S.s2.flow}${S.s2.flow<10?' / 10':' ✓'}`;pill();
+    const M=$('#idMsg'),say=(m,k)=>{M.hidden=false;M.className='msg '+k;M.innerHTML=m};
+    $$('#idT button').forEach(b=>b.onclick=()=>{
+      if(doneQ||b.disabled)return;const k=b.dataset.k;
+      if(k!==e.type){missed=true;b.classList.add('no');b.disabled=true;say('✗ Not '+TYPES[k]+'. '+idNot(e,k),'no');return}
+      doneQ=true;b.classList.add('ok');$$('#idT button').forEach(x=>x.disabled=true);
+      if(!S.s2.seen.includes(e.s))S.s2.seen.push(e.s);
+      if(!missed)S.s2.flow++;save();refresh();pill();
+      say(`✓ <b>${TYPES[e.type]}</b>. ${idWhy(e)} ${missed?'(No credit this time, since the first pick was wrong.)':''} <button class="btn sm" id="idNext" style="margin-left:6px">Next reaction →</button>`,'ok');
+      $('#idNext').onclick=start;
+    });
+  }
+  start();
+})();
+
+checkpoint('#cp2',[
+  {q:'What are the products of every combustion reaction in Model 2?',o:['CO₂ and H₂O','CO₂ and H₂','C and H₂O','O₂ and H₂O'],e:'Every hydrocarbon burns completely to carbon dioxide and water.'},
+  {q:'Which reactant appears in every combustion reaction?',o:['O₂','H₂O','CO₂','CH₄'],e:'Combustion means burning, and burning requires oxygen.'},
+  {q:'A hydrocarbon is…',o:['a compound made of only carbon and hydrogen','any compound that contains oxygen','a compound of carbon, hydrogen and nitrogen','a metal combined with oxygen'],e:'Octane C₈H₁₈, butane C₄H₁₀ and methane CH₄ contain only C and H.'},
+  {q:'Why can\'t a combustion reaction be classified as synthesis?',o:['It makes two products, not one','It has no oxygen','Its reactants are only elements'],e:'Synthesis makes a single product. Combustion makes both CO₂ and H₂O.'},
+  {q:'Classify: 2HgO → 2Hg + O₂',o:['decomposition','synthesis','single replacement','double replacement'],e:'One reactant breaks into two products.'},
+  {q:'Classify: Pb(NO₃)₂ + 2KI → PbI₂ + 2KNO₃',o:['double replacement','single replacement','synthesis','combustion'],e:'No lone elements and no O₂, so it\'s double replacement. Pb²⁺ and K⁺ switch partners.'}],'s2');
+
+/* ===================== STATION 3 ===================== */
+const SWAP=[
+  {r:'AgNO3 + NaCl',t:'dr',ions:[['Ag','c'],['NO3','a'],['Na','c'],['Cl','a']],orig:['Ag|NO3','Na|Cl'],ans:['Ag|Cl','Na|NO3'],out:'AgCl + NaNO3'},
+  {r:'BaCl2 + Na2SO4',t:'dr',ions:[['Ba','c'],['Cl','a'],['Na','c'],['SO4','a']],orig:['Ba|Cl','Na|SO4'],ans:['Ba|SO4','Na|Cl'],out:'BaSO4 + NaCl',note:'The charges already balance in BaSO₄ and NaCl.'},
+  {r:'FeCl3 + NaOH',t:'dr',ions:[['Fe','c'],['Cl','a'],['Na','c'],['OH','a']],orig:['Fe|Cl','Na|OH'],ans:['Fe|OH','Na|Cl'],out:'Fe(OH)3 + NaCl',note:'Fe³⁺ needs three OH⁻ ions: Fe(OH)₃. You will practice balancing charges in Station 4.'},
+  {r:'Pb(NO3)2 + KI',t:'dr',ions:[['Pb','c'],['NO3','a'],['K','c'],['I','a']],orig:['Pb|NO3','K|I'],ans:['Pb|I','K|NO3'],out:'PbI2 + KNO3',note:'Pb²⁺ needs two I⁻ ions: PbI₂.'},
+  {r:'HCl + NaOH',t:'dr',ions:[['H','c'],['Cl','a'],['Na','c'],['OH','a']],orig:['H|Cl','Na|OH'],ans:['H|OH','Na|Cl'],out:'H2O + NaCl',note:'H⁺ + OH⁻ make HOH, which is water, H₂O.'},
+  {r:'CaCl2 + Na2CO3',t:'dr',ions:[['Ca','c'],['Cl','a'],['Na','c'],['CO3','a']],orig:['Ca|Cl','Na|CO3'],ans:['Ca|CO3','Na|Cl'],out:'CaCO3 + NaCl'},
+  {r:'Zn + CuSO4',t:'sr',ions:[['Zn','c',1],['Cu','c'],['SO4','a']],orig:['Cu|SO4'],ans:['Zn|SO4','Cu'],out:'ZnSO4 + Cu',note:'Zinc metal becomes Zn²⁺, and Cu²⁺ becomes copper metal.'},
+  {r:'Cu + AgNO3',t:'sr',ions:[['Cu','c',1],['Ag','c'],['NO3','a']],orig:['Ag|NO3'],ans:['Cu|NO3','Ag'],out:'Cu(NO3)2 + Ag',note:'Cu²⁺ needs two NO₃⁻ ions: Cu(NO₃)₂. This is Lab 3.'},
+  {r:'Mg + HCl',t:'sr',ions:[['Mg','c',1],['H','c'],['Cl','a']],orig:['H|Cl'],ans:['Mg|Cl','H'],out:'MgCl2 + H2',note:'H is diatomic, so the lone hydrogen is H₂. Mg²⁺ needs two Cl⁻: MgCl₂.'},
+  {r:'Cl2 + NaBr',t:'sr',ions:[['Cl','a',1],['Na','c'],['Br','a']],orig:['Na|Br'],ans:['Na|Cl','Br'],out:'NaCl + Br2',note:'A halogen replaces the <i>anion</i>. The freed bromine is diatomic: Br₂.'},
+  {r:'F2 + LiBr',t:'sr',ions:[['F','a',1],['Li','c'],['Br','a']],orig:['Li|Br'],ans:['Li|F','Br'],out:'LiF + Br2',note:'Fluorine forms F⁻, so it replaces Br⁻, not Li⁺ (POGIL Q15).'}];
+(function(){
+  const root=$('#swap3');let q=null,order=shuffle(SWAP),qi=0;
+  const label=(s,k,el)=>el?(DIA.includes(s)?fmtF(s+'2'):fmtF(s))+'<small style="font-family:var(--sans);color:var(--muted);margin-left:4px">element</small>':(k==='c'?catH(s):anH(s));
+  function start(){q=order[qi%order.length];qi++;draw();}
+  function draw(){
+    const sr=q.t==='sr';
+    root.innerHTML=`<div class="prob"><div class="hint" style="margin-top:0">${sr?'Single replacement':'Double replacement'}: the lone element trades places with the matching ion.</div>
+      <div class="eqbig">${fmtSide(q.r)} <span class="arr">→</span> ?</div>
+      <div class="hint">Pieces from the reactants:</div><div class="bank" id="swBank"></div>
+      <div class="prodline"><span class="hint" style="margin:0">Products:</span>
+        <span class="cmpd"><span class="slot cat" data-s="0"><small>cation</small></span><span class="slot an" data-s="1"><small>anion</small></span></span>
+        <span class="op">+</span>
+        ${sr?'<span class="slot el" data-s="2"><small>element</small></span>':'<span class="cmpd"><span class="slot cat" data-s="2"><small>cation</small></span><span class="slot an" data-s="3"><small>anion</small></span></span>'}
+      </div>
+      <div class="row" style="margin-top:10px"><button class="btn sm" id="swChk">Check</button><button class="btn ghost sm" id="swClr">Clear</button><span class="counter-pill" id="swPill"></span></div>
+      <div class="msg" hidden id="swMsg"></div></div>`;
+    $('#swPill').textContent=`Built: ${S.s3.swap}${S.s3.swap<4?' / 4':' ✓'}`;
+    const bank=$('#swBank');
+    q.ions.forEach(([s,k,el])=>bank.appendChild(chip(label(s,k,el),{s,k,el},el?'e':k)));
+    zone(bank,c=>bank.appendChild(c));
+    $$('#swap3 .slot').forEach(sl=>zone(sl,c=>{const old=sl.querySelector('.chip');if(old)bank.appendChild(old);sl.querySelector('small')&&(sl.querySelector('small').hidden=true);sl.appendChild(c);
+      $$('#swap3 .slot').forEach(z=>{const sm=z.querySelector('small');if(sm)sm.hidden=!!z.querySelector('.chip')});}));
+    $('#swClr').onclick=draw;
+    $('#swChk').onclick=check;
+  }
+  function check(){
+    const M=$('#swMsg'),sl=$$('#swap3 .slot'),got=sl.map(z=>{const c=z.querySelector('.chip');return c?c._p:null});
+    const say=(m,g)=>{M.hidden=false;M.className='msg '+(g?'ok':'no');M.innerHTML=m};
+    if(got.some(x=>!x))return say('Fill every box in the products first.');
+    const sr=q.t==='sr';
+    const cmp=sr?[[got[0],got[1]]]:[[got[0],got[1]],[got[2],got[3]]];
+    for(const [c,a] of cmp){if(c.k!=='c'||a.k!=='a')return say(`✗ In a compound the <b>cation (+)</b> goes first and the <b>anion (−)</b> second. ${c.k==='a'&&a.k==='a'?'Two anions can\'t bond. They\'re both negative!':c.k==='c'&&a.k==='c'?'Two cations can\'t bond. They\'re both positive!':''}`)}
+    const pairs=cmp.map(([c,a])=>c.s+'|'+a.s);
+    if(sr&&got[2].s&&q.ans[1]!==got[2].s){
+      const el=q.ions.find(i=>i[2]);
+      return say(el&&got[2].s===el[0]?`✗ ${el[0]} is the element that <i>enters</i> the compound. The element that comes out alone is the one it replaced.`:'✗ The lone element in the products is the ion that got replaced. Which ion has the same kind of charge as the element?');}
+    if(pairs.some(p=>q.orig.includes(p)))return say('✗ That\'s one of the reactant compounds. In a replacement reaction the partners <b>switch</b>.');
+    const want=sr?[q.ans[0]]:q.ans;
+    if(!sameMulti(pairs,want))return say(sr?`✗ ${q.ions[0][1]==='c'?'A metal element replaces the <b>cation</b> (the metal or H).':'A halogen element replaces the <b>anion</b>.'}`:'✗ Each cation should pair with the <i>other</i> compound\'s anion.');
+    S.s3.swap++;save();refresh();
+    say(`✓ Correct! Products: <b class="mono">${fmtSide(q.out)}</b>. ${q.note||''} <button class="btn sm" id="swNext" style="margin-left:6px">Next →</button>`,true);
+    $('#swPill').textContent=`Built: ${S.s3.swap}${S.s3.swap<4?' / 4':' ✓'}`;
+    $('#swNext').onclick=start;$('#swChk').disabled=true;
+  }
+  start();
+})();
+
+const MC3=[
+  {r:'Zn + CuSO4',t:'sr',o:['ZnSO4 + Cu','ZnCuSO4','ZnCu + SO4','CuSO4 + Zn'],e:'Zinc metal replaces copper(II) ions, so copper comes out as the lone element.'},
+  {r:'Cl2 + NaBr',t:'sr',o:['NaCl + Br2','NaBrCl2','Na + BrCl','NaCl + Br'],e:'Chlorine replaces the bromide anion. Free bromine is diatomic, Br₂.'},
+  {r:'Mg + O2',t:'syn',o:['MgO','MgO2','Mg2O','MgO + O2'],e:'Mg²⁺ and O²⁻ combine 1 : 1 into one product, MgO.'},
+  {r:'H2O',t:'dec',o:['H2 + O2','H + O','H2O2','H2 + O'],e:'Water breaks into its elements, and both hydrogen and oxygen are diatomic.'},
+  {r:'CH4 + O2',t:'comb',o:['CO2 + H2O','CH4O2','C + H2O','CO2 + H2'],e:'A hydrocarbon burning in oxygen always makes carbon dioxide and water.'},
+  {r:'BaCl2 + Na2SO4',t:'dr',o:['BaSO4 + NaCl','BaNa + ClSO4','Ba + Cl2 + Na2SO4','BaCl2Na2SO4'],e:'Ba²⁺ takes SO₄²⁻ and Na⁺ takes Cl⁻.'},
+  {r:'KClO3',t:'dec',o:['KCl + O2','K + ClO3','KO3 + Cl','K + Cl + O3'],e:'Potassium chlorate loses its oxygen as O₂ gas and leaves KCl.'},
+  {r:'Al + Br2',t:'syn',o:['AlBr3','AlBr','Al2Br','AlBr2'],e:'Al³⁺ needs three Br⁻ ions: AlBr₃.'},
+  {r:'Mg + HCl',t:'sr',o:['MgCl2 + H2','MgH + Cl','MgCl + H','MgHCl'],e:'Mg replaces hydrogen. Mg²⁺ needs two Cl⁻, and hydrogen gas is H₂.'},
+  {r:'C3H8 + O2',t:'comb',o:['CO2 + H2O','C3H8O2','C3O2 + H8','CO + H2O2'],e:'Propane is a hydrocarbon, so it burns to CO₂ and H₂O.'},
+  {r:'Pb(NO3)2 + KI',t:'dr',o:['PbI2 + KNO3','PbK + NO3I','Pb + KNO3 + I2','PbNO3 + KI2'],e:'Pb²⁺ pairs with I⁻ (as PbI₂), and K⁺ pairs with NO₃⁻.'},
+  {r:'CaCO3',t:'dec',o:['CaO + CO2','Ca + CO3','CaC + O3','Ca + C + O3'],e:'Metal carbonates decompose into a metal oxide and carbon dioxide.'},
+  {r:'P2O5 + H2O',t:'syn',o:['H3PO4','PH3 + O2','P2H2 + O6','H2P2O5 + O'],e:'Diphosphorus pentoxide + water → phosphoric acid, H₃PO₄ (POGIL Q17).'},
+  {r:'FeCl3 + NaOH',t:'dr',o:['Fe(OH)3 + NaCl','FeOH + NaCl3','FeNa + Cl3OH','Fe + Cl2 + NaOH'],e:'Fe³⁺ needs three OH⁻; Na⁺ needs one Cl⁻ (POGIL Q16).'},
+  {r:'Li + Cl2',t:'syn',o:['LiCl','LiCl2','Li2Cl','Li + Cl'],e:'Li⁺ and Cl⁻ combine 1 : 1 into LiCl.'},
+  {r:'Fe + CuSO4',t:'sr',o:['FeSO4 + Cu','FeCu + SO4','FeS + CuO4','Cu + Fe + SO4'],e:'Iron replaces copper (Lab: Fe + CuSO₄ → FeSO₄ + Cu).'}];
+(function(){
+  const root=$('#mc3');let order=shuffle(MC3),qi=0;
+  function start(){const q=order[qi%order.length];qi++;draw(q);}
+  function draw(q){
+    let typed=false,missed=false;
+    root.innerHTML=`<div class="prob"><div class="eqbig">${fmtSide(q.r)} <span class="arr">→</span> ?</div>
+      <div class="step"><span class="n">1</span>Reaction type:</div><div class="tbtns" id="mcT">${TORDER.map(k=>`<button data-k="${k}">${TYPES[k]}</button>`).join('')}</div>
+      <div id="mcP" hidden><div class="step"><span class="n">2</span>Which products does that pattern give?</div><div class="opts" id="mcO"></div></div>
+      <div class="msg" hidden id="mcMsg"></div><div class="counter-pill" id="mcPill"></div></div>`;
+    const pill=()=>$('#mcPill').textContent=`Correct: ${S.s3.mc}${S.s3.mc<6?' / 6':' ✓'}`;pill();
+    const M=$('#mcMsg'),say=(m,c)=>{M.hidden=false;M.className='msg '+(c||'');M.innerHTML=m};
+    $$('#mcT button').forEach(b=>b.onclick=()=>{
+      if(typed)return;
+      if(b.dataset.k!==q.t){b.classList.add('no');b.disabled=true;say('✗ '+TYPEHINT[b.dataset.k].split(':')[0]+' doesn\'t fit. Count the reactants and look for lone elements or O₂.','no');return}
+      typed=true;b.classList.add('ok');say(`✓ ${TYPES[q.t]}. ${TYPEHINT[q.t].split(': ')[1]}`,'ok');$('#mcP').hidden=false;
+      shuffle(q.o.map((_,i)=>i)).forEach(i=>{const o=document.createElement('button');o.className='opt mono';o.innerHTML=fmtSide(q.o[i]);$('#mcO').appendChild(o);
+        o.onclick=()=>{if(o.disabled)return;
+          if(i===0){o.classList.add('ok');$$('#mcO .opt').forEach(x=>x.disabled=true);
+            if(!missed){S.s3.mc++;save();refresh();pill();}
+            say(`✓ ${q.e} ${missed?'(No credit this time, since the first pick was wrong.)':''} <button class="btn sm" id="mcNext" style="margin-left:6px">Next →</button>`,'ok');$('#mcNext').onclick=start;}
+          else{missed=true;o.classList.add('no');o.disabled=true;say('✗ Not those products. '+TYPEHINT[q.t],'no');}};});
+    });
+  }
+  start();
+})();
+
+checkpoint('#cp3',[
+  {q:'In a double replacement reaction AB + CD, the products are…',o:['AD + CB','AC + BD','ABCD','A + B + CD'],e:'Each cation (A, C) pairs with the other compound\'s anion (D, B).'},
+  {q:'In Zn + 2HCl → ?, zinc replaces…',o:['hydrogen, making ZnCl₂ + H₂','chlorine, making ZnH₂ + Cl₂','nothing, because there is no reaction'],e:'A metal replaces the cation, and in an acid the cation is H⁺.'},
+  {q:'Predict the products: Cl₂ + 2KI → ?',o:['2KCl + I₂','KClI','K₂ + 2ICl','2KI + Cl₂'],e:'Chlorine replaces the iodide anion, and iodine comes out as diatomic I₂.'},
+  {q:'Predict the products of burning ethane: C₂H₆ + O₂ → ?',o:['CO₂ + H₂O','C₂O + H₆O','CH₄ + CO','C + H₂O'],e:'Hydrocarbon combustion always makes CO₂ and H₂O.'},
+  {q:'Which reaction type has only one reactant?',o:['decomposition','synthesis','single replacement','double replacement'],e:'AB → A + B.'},
+  {q:'Predict the product: Mg + Cl₂ → ?',o:['MgCl₂','MgCl','Mg₂Cl','Mg + Cl₂'],e:'Synthesis. Mg²⁺ needs two Cl⁻ ions.'}],'s3');
+
+/* ===================== STATION 4 ===================== */
+const DIAI=[...[['H','hydrogen'],['N','nitrogen'],['O','oxygen'],['F','fluorine'],['Cl','chlorine'],['Br','bromine'],['I','iodine']].map(([s,n])=>({s,n,bin:0,why:'HOFBrINCl: H, O, F, Br, I, N and Cl are diatomic as elements.'})),
+  ...[['Na','sodium'],['Mg','magnesium'],['Al','aluminum'],['Zn','zinc'],['Cu','copper'],['Ag','silver'],['Ca','calcium'],['Fe','iron'],['Hg','mercury'],['C','carbon']].map(([s,n])=>({s,n,bin:1,why:'Metals (and carbon) are written as single atoms: Na, Zn, Cu, C. Only the seven HOFBrINCl elements are diatomic.'}))]
+  .map(x=>({...x,h:`${x.s} <small style="font-family:var(--sans);color:var(--muted)">${x.n}</small>`}));
+sortActivity({bank:'#diaBank',bins:['#dia0','#dia1'],items:DIAI,doneFlag:()=>S.s4.dia,fb:'#diaFb',btn:'#diaChk',onDone:()=>{S.s4.dia=true;save();refresh();}});
+
+const CHG=[['Fe','OH','FeCl3 + NaOH'],['Al','O','Al + O2'],['Mg','N','Mg + N2'],['Ca','PO4','CaCl2 + Na3PO4'],['Cu','NO3','Cu + AgNO3'],['Ag','CO3','AgNO3 + Na2CO3'],
+  ['Na','SO4','NaOH + H2SO4'],['Ba','Cl','BaCl2'],['Pb','CrO4','Pb(NO3)2 + K2CrO4'],['Al','SO4','Al + CuSO4'],['Zn','PO4','Zn(NO3)2 + K3PO4'],['K','O','K + O2'],['NH4','S','(NH4)2S'],['Sr','NO3','SrCl2 + AgNO3'],['Cr','Cl','Cr(NO3)3 + ZnCl2'],['Al','Br','Al + Br2']];
+(function(){
+  const root=$('#chg4');let order=shuffle(CHG),qi=0;
+  function start(){const [c,a,src]=order[qi%order.length];qi++;draw(c,a,src);}
+  function draw(c,a,src){
+    let nc=1,na=1,tries=0,phase=1;const qc=CAT[c],qa=AN[a],ans=compound(c,a);
+    root.innerHTML=`<div class="prob"><div class="hint" style="margin-top:0">New compound from <span class="mono">${fmtSide(src)}</span>: combine the ions so the total charge is zero.</div>
+      <div class="grid2" style="gap:12px;margin-top:6px">
+        <div><div class="ctlrow"><span>Cation <span class="mono" style="color:var(--cat)">${catH(c)}</span></span><span class="stepper"><button data-k="c-">−</button><b id="cgNc">1</b><button data-k="c+">+</button></span></div>
+          <div class="ionrow" id="cgC"></div>
+          <div class="ctlrow"><span>Anion <span class="mono" style="color:var(--an)">${anH(a)}</span></span><span class="stepper"><button data-k="a-">−</button><b id="cgNa">1</b><button data-k="a+">+</button></span></div>
+          <div class="ionrow" id="cgA"></div></div>
+        <div><div class="meterwrap"><div class="cmeter"><div class="mid"></div><div class="fill" id="cgFill"></div></div><div class="cmeter-l"><span>more −</span><span>0</span><span>more +</span></div></div>
+          <p>Total charge: <span class="netq" id="cgNet"></span></p>
+          <div id="cgStep2" hidden><div class="step"><span class="n">2</span>Write the formula: <input class="fill" id="cgIn" placeholder="formula" autocomplete="off" spellcheck="false"><button class="btn sm" id="cgChk2">Check</button></div><div class="step">Preview: <span class="preview" id="cgPrev"></span></div></div>
+          <div class="row"><button class="btn sm" id="cgChk">Check charges</button></div></div></div>
+      <div class="msg" hidden id="cgMsg"></div><div class="counter-pill" id="cgPill"></div></div>`;
+    const pill=()=>$('#cgPill').textContent=`Balanced: ${S.s4.charge}${S.s4.charge<6?' / 6':' ✓'}`;pill();
+    const M=$('#cgMsg'),say=(m,k)=>{M.hidden=false;M.className='msg '+(k||'');M.innerHTML=m};
+    function upd(){
+      $('#cgNc').textContent=nc;$('#cgNa').textContent=na;
+      $('#cgC').innerHTML=Array.from({length:nc},()=>`<span class="chip c"><span>${catH(c)}</span></span>`).join('');
+      $('#cgA').innerHTML=Array.from({length:na},()=>`<span class="chip a"><span>${anH(a)}</span></span>`).join('');
+      const net=nc*qc-na*qa,w=Math.min(50,Math.abs(net)*7);
+      const f=$('#cgFill');f.style.left=net>=0?'50%':(50-w)+'%';f.style.width=w+'%';f.style.background=net>0?'var(--cat)':net<0?'var(--an)':'var(--good)';
+      $('#cgNet').innerHTML=`(${nc} × ${qc}+) + (${na} × ${qa}−) = <span style="color:${net===0?'var(--good)':'var(--gold)'}">${net>0?'+':''}${net}</span>`;
+    }
+    root.querySelectorAll('.stepper button').forEach(b=>b.onclick=()=>{if(phase!==1)return;const k=b.dataset.k;if(k==='c+')nc=Math.min(6,nc+1);if(k==='c-')nc=Math.max(1,nc-1);if(k==='a+')na=Math.min(6,na+1);if(k==='a-')na=Math.max(1,na-1);upd();});
+    upd();
+    $('#cgChk').onclick=()=>{
+      const net=nc*qc-na*qa;
+      if(net!==0)return say(`✗ The total charge is ${net>0?'+':''}${net}. ${net>0?'Add another anion or remove a cation.':'Add another cation or remove an anion.'} Tip: cross the charge numbers (${qc} and ${qa}).`,'no');
+      if(gcd(nc,na)>1)return say(`✗ Neutral, but ${nc} : ${na} can be reduced. Ionic formulas use the lowest whole-number ratio.`,'no');
+      phase=2;$('#cgChk').hidden=true;$('#cgStep2').hidden=false;say(`✓ ${nc} ${c}${nc>1?' ions':' ion'} and ${na} ${a}${na>1?' ions':' ion'} make a neutral compound. Now write it as a formula.`,'ok');
+      const inp=$('#cgIn');fPreview(inp,$('#cgPrev'));inp.focus();
+      const chk2=()=>{const v=normF(inp.value);
+        if(v===ans){mark(inp,true);inp.disabled=true;S.s4.charge++;save();refresh();pill();say(`✓ <b class="mono">${fmtF(ans)}</b>. ${POLY.has(a)&&na>1||POLY.has(c)&&nc>1?'The parentheses show the subscript applies to the whole polyatomic ion.':''} <button class="btn sm" id="cgNext" style="margin-left:6px">Next →</button>`,'ok');$('#cgNext').onclick=start;return}
+        tries++;mark(inp,false);
+        let m=v.replace(/[()]/g,'')===ans.replace(/[()]/g,'')?'Put the polyatomic ion in parentheses before its subscript, like Ca₃(PO₄)₂.':
+          (v&&!/^[A-Z]/.test(v))?'Element symbols start with a capital letter.':
+          `Use your counts as subscripts: ${nc} ${c} and ${na} ${a}. Don't write a subscript of 1.`;
+        if(tries>=3)m+=` Answer: <b class="mono">${fmtF(ans)}</b>.`;
+        say('✗ '+m,'no');};
+      $('#cgChk2').onclick=chk2;inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!inp.disabled)chk2()});
+    };
+  }
+  start();
+})();
+
+const ERR=[
+  {eq:'Mg + O2 -> MgO2',o:['MgO₂ is wrong: Mg²⁺ and O²⁻ combine 1 : 1','Oxygen should be written O, not O₂','It should be a decomposition reaction','Nothing; it just needs coefficients'],ask:'Type the correct product formula:',sets:[['MgO']],r:['Mg','O2'],type:'syn',e:'Mg²⁺ + O²⁻ → MgO. The 2 in O₂ describes the oxygen molecule, not the compound.'},
+  {eq:'Mg + O -> MgO',o:['Elemental oxygen is diatomic, so it must be written O₂','MgO should be MgO₂','Magnesium should be Mg₂','Nothing is wrong'],ask:'Type the correct formula for elemental oxygen:',sets:[['O2']],r:['Mg'],type:'syn',e:'Correct equation: 2Mg + O₂ → 2MgO.'},
+  {eq:'2LiBr + F2 -> 2Li + 2FBr',o:['Fluorine forms F⁻, so it replaces Br⁻ (not Li⁺): LiF and Br₂ form','Fluorine should replace lithium, so the products are fine','Li should be written Li₂','It should be double replacement'],ask:'Type the correct products:',sets:[['LiF','Br2']],r:['LiBr','F2'],type:'sr',e:'2LiBr + F₂ → 2LiF + Br₂. A halogen replaces the other halogen.'},
+  {eq:'FeBr3 + NaOH -> FeOH + NaBr3',o:['The charges aren\'t balanced: Fe³⁺ needs three OH⁻ and Na⁺ needs one Br⁻','The ions shouldn\'t switch partners','NaOH can\'t react with FeBr₃','The products should be Fe and Br₂'],ask:'Type the correct products:',sets:[['Fe(OH)3','NaBr']],r:['FeBr3','NaOH'],type:'dr',e:'FeBr₃ + 3NaOH → Fe(OH)₃ + 3NaBr. Subscripts come from the new partner\'s charge, not the old compound.'},
+  {eq:'Na + Cl -> NaCl',o:['Elemental chlorine is diatomic, so it must be written Cl₂','The product should be NaCl₂','Sodium should be written Na₂','Nothing is wrong'],ask:'Type the correct formula for elemental chlorine:',sets:[['Cl2']],r:['Na'],type:'syn',e:'2Na + Cl₂ → 2NaCl.'},
+  {eq:'H2O -> H + O',o:['Hydrogen and oxygen are diatomic, so the products are H₂ + O₂','The products should be H₂O₂','Water can\'t decompose','It should be H₂ + O'],ask:'Type the correct products:',sets:[['H2','O2']],r:['H2O'],type:'dec',e:'2H₂O → 2H₂ + O₂.'},
+  {eq:'Ca + HCl -> CaH + Cl',o:['Ca replaces hydrogen (the cation): products are CaCl₂ + H₂','Ca should replace chlorine','The products are correct','It should be synthesis'],ask:'Type the correct products:',sets:[['CaCl2','H2']],r:['Ca','HCl'],type:'sr',e:'Ca + 2HCl → CaCl₂ + H₂ (Lab: single replacement practice).'},
+  {eq:'C3H8 + O2 -> C3O2 + H8',o:['Complete combustion always makes CO₂ and H₂O','The O₂ should be O','Propane can\'t burn','It should be decomposition'],ask:'Type the correct products:',sets:[['CO2','H2O']],r:['C3H8','O2'],type:'comb',e:'C₃H₈ + 5O₂ → 3CO₂ + 4H₂O.'}];
+(function(){
+  const root=$('#err4');let order=shuffle(ERR),qi=0;
+  function start(){const q=order[qi%order.length];qi++;draw(q);}
+  function draw(q){
+    let found=false,tries=0;
+    root.innerHTML=`<div class="prob"><div class="hint" style="margin-top:0">A student wrote:</div><div class="eqbig" style="color:#ffd0d0">${fmtEq(q.eq)}</div>
+      <div class="step"><span class="n">1</span>What's the error?</div><div class="opts" id="erO"></div>
+      <div id="erFix" hidden><div class="step"><span class="n">2</span>${q.ask} <input class="fill wide" id="erIn" autocomplete="off" spellcheck="false"><button class="btn sm" id="erChk">Check</button></div><div class="step">Preview: <span class="preview" id="erPrev"></span></div></div>
+      <div class="msg" hidden id="erMsg"></div><div class="counter-pill" id="erPill"></div></div>`;
+    const pill=()=>$('#erPill').textContent=`Fixed: ${S.s4.err}${S.s4.err<4?' / 4':' ✓'}`;pill();
+    const M=$('#erMsg'),say=(m,k)=>{M.hidden=false;M.className='msg '+(k||'');M.innerHTML=m};
+    shuffle(q.o.map((_,i)=>i)).forEach(i=>{const b=document.createElement('button');b.className='opt';b.innerHTML=q.o[i];$('#erO').appendChild(b);
+      b.onclick=()=>{if(found||b.disabled)return;
+        if(i===0){found=true;b.classList.add('ok');$$('#erO .opt').forEach(x=>x.disabled=true);$('#erFix').hidden=false;say('✓ You found it. Now fix it.','ok');const inp=$('#erIn');fPreview(inp,$('#erPrev'));inp.focus();
+          const chk=()=>{const r=checkPred(inp.value,q);
+            if(r.ok){mark(inp,true);inp.disabled=true;S.s4.err++;save();refresh();pill();say(`✓ ${q.e} <button class="btn sm" id="erNext" style="margin-left:6px">Next →</button>`,'ok');$('#erNext').onclick=start;return}
+            tries++;say('✗ '+r.msg+(tries>=3?` Answer: <b class="mono">${q.sets[0].map(fmtF).join(' + ')}</b>.`:''),'no');};
+          $('#erChk').onclick=chk;inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!inp.disabled)chk()});}
+        else{b.classList.add('no');b.disabled=true;say('✗ Not quite. Check the charges of the ions and whether any element should be diatomic.','no');}};});
+  }
+  start();
+})();
+
+checkpoint('#cp4',[
+  {q:'Which element is <b>not</b> diatomic?',o:['Na','N','Br','I'],e:'Sodium is a metal and is written Na. The diatomic seven are H, N, O, F, Cl, Br, I.'},
+  {q:'Fe³⁺ and OH⁻ combine as…',o:['Fe(OH)₃','FeOH₃','FeOH','Fe₃OH'],e:'Three OH⁻ (3−) balance one Fe³⁺ (3+). Parentheses keep the hydroxide ion together.'},
+  {q:'Al³⁺ and O²⁻ combine as…',o:['Al₂O₃','AlO','Al₃O₂','AlO₃'],e:'Cross the charges: Al₂O₃ gives 2(3+) + 3(2−) = 0.'},
+  {q:'Why is Fe(OH)₃ written with parentheses?',o:['The 3 applies to the whole hydroxide ion, OH⁻','It shows that OH is a gas','Parentheses mark the negative ion'],e:'FeOH₃ would mean 1 O and 3 H, which is a different substance.'},
+  {q:'When fluorine reacts with LiBr, which element does it replace?',o:['bromine, because both form 1− ions','lithium, because it comes first','neither one'],e:'A nonmetal element replaces the anion.'},
+  {q:'Why is the bromine in 2LiBr + F₂ → 2LiF + Br₂ written as Br₂?',o:['Bromine is diatomic when it stands alone as an element','Two LiBr were used','The charges must balance'],e:'Elemental bromine exists as Br₂ molecules.'}],'s4');
+
+/* ===================== STATION 5 ===================== */
+const BAL=['CH4 + O2 -> CO2 + H2O','Cu + O2 -> CuO','Cu + AgNO3 -> Cu(NO3)2 + Ag','FeCl3 + NaOH -> Fe(OH)3 + NaCl','(NH4)2Cr2O7 -> Cr2O3 + N2 + H2O','CaCO3 -> CaO + CO2',
+  'KClO3 -> KCl + O2','Na + H2O -> NaOH + H2','Al + HCl -> AlCl3 + H2','Fe + O2 -> Fe2O3','N2 + H2 -> NH3','Al(NO3)3 + Ca -> Ca(NO3)2 + Al',
+  'C2H6 + O2 -> CO2 + H2O','K3PO4 + FeBr3 -> FePO4 + KBr','Al + O2 -> Al2O3','C4H10 + O2 -> CO2 + H2O'].map(s=>mkEq(s));
+(function(){
+  const root=$('#bal5');let order=shuffle(BAL.filter(e=>!S.s5.bal.includes(e.s))).concat(shuffle(BAL.filter(e=>S.s5.bal.includes(e.s)))),qi=0;
+  function start(){const e=order[qi%order.length];qi++;
+    root.innerHTML='<div id="balBox"></div><div class="row" style="margin-top:8px"><button class="btn ghost sm" id="balSkip">Skip</button><span class="counter-pill" id="balPill"></span></div>';
+    const pill=()=>$('#balPill').textContent=`Balanced: ${S.s5.bal.length}${S.s5.bal.length<6?' / 6':' ✓'}`;pill();
+    balancer($('#balBox'),e.r,e.p,{label:`<div class="hint" style="margin:0 0 8px">Type: <b>${TYPES[classify(e)]}</b></div>`,onDone:()=>{if(!S.s5.bal.includes(e.s)){S.s5.bal.push(e.s);save();refresh();pill();}
+      const s=$('#balSkip');s.textContent='Next equation →';s.className='btn sm';}});
+    $('#balSkip').onclick=start;}
+  start();
+})();
+
+const PIPE=[
+  {r:'Na + FeBr3',type:'sr',sets:[['NaBr','Fe']],src:'Worksheet #1'},
+  {r:'NaOH + H2SO4',type:'dr',sets:[['Na2SO4','H2O']],src:'Worksheet #2'},
+  {r:'C2H4O2 + O2',type:'comb',sets:[['CO2','H2O']],src:'Worksheet #3'},
+  {r:'NH3 + H2O',type:'syn',sets:[['NH4OH']],src:'Worksheet #4'},
+  {r:'PbSO4 + AgNO3',type:'dr',sets:[['Ag2SO4','Pb(NO3)2']],src:'Worksheet #5'},
+  {r:'PBr3',type:'dec',sets:[['P','Br2'],['P4','Br2']],src:'Worksheet #6',note:'Elemental phosphorus is often written P₄.'},
+  {r:'HBr + Fe',type:'sr',sets:[['H2','FeBr2'],['H2','FeBr3']],src:'Worksheet #7',note:'Iron can form Fe²⁺ or Fe³⁺, so FeBr₂ and FeBr₃ are both accepted.'},
+  {r:'KMnO4 + ZnCl2',type:'dr',sets:[['KCl','Zn(MnO4)2']],src:'Worksheet #8'},
+  {r:'MnO2 + Sn(OH)4',type:'dr',sets:[['Mn(OH)4','SnO2']],src:'Worksheet #9',note:'Mn⁴⁺ and Sn⁴⁺ switch partners.'},
+  {r:'C5H12O2 + O2',type:'comb',sets:[['CO2','H2O']],src:'Worksheet #10'},
+  {r:'H2O2',type:'dec',sets:[['H2','O2'],['H2O','O2']],src:'Worksheet #11',note:'Hydrogen peroxide usually breaks into water and oxygen, but H₂ + O₂ is also accepted.'},
+  {r:'PtCl4 + Cl2',type:'syn',sets:[['PtCl6']],src:'Worksheet #12'},
+  {r:'C4H8 + O2',type:'comb',sets:[['CO2','H2O']],src:'Lab: combustion'},
+  {r:'C10H16 + O2',type:'comb',sets:[['CO2','H2O']],src:'Lab: combustion'},
+  {r:'Mg + O2',type:'syn',sets:[['MgO']],src:'Lab 2'},
+  {r:'Ca + HCl',type:'sr',sets:[['CaCl2','H2']],src:'Lab: single replacement'},
+  {r:'Mg + Zn(NO3)2',type:'sr',sets:[['Mg(NO3)2','Zn']],src:'Lab: single replacement'},
+  {r:'BaCl2 + Na2SO4',type:'dr',sets:[['BaSO4','NaCl']],src:'Lab: double replacement'},
+  {r:'NaCl + AgNO3',type:'dr',sets:[['AgCl','NaNO3']],src:'Lab: double replacement'},
+  {r:'HCl + CaS',type:'dr',sets:[['CaCl2','H2S']],src:'Lab: double replacement'},
+  {r:'NaCl',type:'dec',sets:[['Na','Cl2']],src:'Lab: decomposition'},
+  {r:'HgO',type:'dec',sets:[['Hg','O2']],src:'Lab: decomposition'},
+  {r:'Al + N2',type:'syn',sets:[['AlN']],src:'POGIL Q18a'},
+  {r:'N2O',type:'dec',sets:[['N2','O2']],src:'POGIL Q18b'},
+  {r:'SrCl2 + AgNO3',type:'dr',sets:[['AgCl','Sr(NO3)2']],src:'POGIL Q18c'},
+  {r:'Cr(NO3)3 + ZnCl2',type:'dr',sets:[['CrCl3','Zn(NO3)2']],src:'POGIL Q18d'},
+  {r:'Na + Cl2',type:'syn',sets:[['NaCl']],src:'POGIL Q18e'},
+  {r:'Zn + HCl',type:'sr',sets:[['ZnCl2','H2']],src:'POGIL Q18f'},
+  {r:'C5H12 + O2',type:'comb',sets:[['CO2','H2O']],src:'POGIL Q22a'},
+  {r:'C2H2 + O2',type:'comb',sets:[['CO2','H2O']],src:'POGIL Q22b'},
+  {r:'C3H7OH + O2',type:'comb',sets:[['CO2','H2O']],src:'POGIL Q23a'},
+  {r:'C6H12O6 + O2',type:'comb',sets:[['CO2','H2O']],src:'POGIL Q23b'}].map(p=>({...p,rr:p.r.split(' + ')}));
+(function(){
+  const root=$('#pipe5');let order=shuffle(PIPE),qi=0;
+  function start(){const q=order[qi%order.length];qi++;draw(q);}
+  function draw(q){
+    let typed=false,tries=0;
+    root.innerHTML=`<div class="prob"><div class="hint" style="margin-top:0">${q.src}</div><div class="eqbig">${fmtSide(q.r)} <span class="arr">→</span> ?</div>
+      <div class="step"><span class="n">1</span>Classify:</div><div class="tbtns" id="ppT">${TORDER.map(k=>`<button data-k="${k}">${TYPES[k]}</button>`).join('')}</div>
+      <div id="ppP" hidden><div class="step"><span class="n">2</span>Predict the products: <input class="fill wide" id="ppIn" placeholder="e.g. NaBr + Fe" autocomplete="off" spellcheck="false"><button class="btn sm" id="ppChk">Check</button></div><div class="step">Preview: <span class="preview" id="ppPrev"></span></div></div>
+      <div id="ppB" hidden><div class="step"><span class="n">3</span>Balance the equation:</div><div id="ppBal"></div></div>
+      <div class="msg" hidden id="ppMsg"></div>
+      <div class="row" style="margin-top:8px"><button class="btn ghost sm" id="ppSkip">Skip</button><span class="counter-pill" id="ppPill"></span></div></div>`;
+    const pill=()=>$('#ppPill').textContent=`Completed: ${S.s5.pipe}${S.s5.pipe<5?' / 5':' ✓'}`;pill();
+    const M=$('#ppMsg'),say=(m,k)=>{M.hidden=false;M.className='msg '+(k||'');M.innerHTML=m};
+    $('#ppSkip').onclick=start;
+    $$('#ppT button').forEach(b=>b.onclick=()=>{
+      if(typed)return;
+      if(b.dataset.k!==q.type){b.classList.add('no');b.disabled=true;say('✗ Not '+TYPES[b.dataset.k]+'. Use the flowchart: O₂ with a hydrocarbon? One product? One reactant? A lone element?','no');return}
+      typed=true;b.classList.add('ok');say(`✓ ${TYPES[q.type]}. ${TYPEHINT[q.type].split(': ')[1]}`,'ok');$('#ppP').hidden=false;
+      const inp=$('#ppIn');fPreview(inp,$('#ppPrev'));inp.focus();
+      const chk=()=>{const r=checkPred(inp.value,{r:q.rr,sets:q.sets,type:q.type});
+        if(r.ok){mark(inp,true);inp.disabled=true;$('#ppChk').disabled=true;say(`✓ Products are correct. ${q.note||''} Now balance it.`,'ok');$('#ppB').hidden=false;
+          balancer($('#ppBal'),q.rr,r.set,{onDone:()=>{S.s5.pipe++;save();refresh();pill();say('✓ Predicted, balanced and classified! That\'s the whole standard.','ok');const s=$('#ppSkip');s.textContent='Next reaction →';s.className='btn sm';}});return}
+        tries++;mark(inp,false);say('✗ '+r.msg+(tries>=3?` Answer: <b class="mono">${q.sets[0].map(fmtF).join(' + ')}</b>`:''),'no');};
+      $('#ppChk').onclick=chk;inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!inp.disabled)chk()});
+    });
+  }
+  start();
+})();
+
+checkpoint('#cp5',[
+  {q:'Balancing an equation means changing…',o:['coefficients only','subscripts only','both coefficients and subscripts','the products until they match'],e:'Coefficients count molecules. Subscripts define what the substance is.'},
+  {q:'Why can\'t you balance 2H₂ + O₂ → H₂O by changing H₂O to H₂O₂?',o:['That changes water into hydrogen peroxide, a different substance','You can; it\'s allowed','Subscripts can only change on metals'],e:'Write the correct formulas first, then balance with coefficients only.'},
+  {q:'Balance: __Al + __O₂ → __Al₂O₃',o:['4, 3, 2','2, 3, 1','1, 1, 1','4, 6, 2'],e:'4 Al and 6 O on each side.'},
+  {q:'Balance: __CH₄ + __O₂ → __CO₂ + __H₂O',o:['1, 2, 1, 2','1, 1, 1, 1','2, 3, 2, 4','1, 4, 1, 2'],e:'1 C, 4 H and 4 O on each side.'},
+  {q:'A balanced equation follows the law of conservation of mass, which means…',o:['each kind of atom has the same count on both sides','the number of molecules is the same on both sides','products always weigh less than reactants'],e:'Atoms are rearranged, never created or destroyed.'},
+  {q:'How many oxygen atoms are in 2Al(NO₃)₃?',o:['18','9','6','3'],e:'2 × 3 × 3 = 18.'}],'s5');
+
+/* ===================== STATION 6: VIRTUAL LAB ===================== */
+const OBS=['Blue flame and heat; water droplets fog a cold surface held above it','The shiny orange-brown metal turns black on the surface','A blinding white light, then a white, crumbly powder is left',
+  'Silvery crystals grow on the wire, and the clear solution slowly turns blue','A rust-brown, cloudy solid forms as soon as the two solutions mix','Orange crystals spark and grow into a fluffy green solid while gas is released'];
+const LABS=[
+  {id:'L1',name:'Combustion of methane',eq:'CH4 + O2 -> CO2 + H2O',type:'comb',obs:0,proc:['Put on goggles and light the Bunsen burner.','Hold a cold watch glass above the flame with tongs.']},
+  {id:'L2',name:'Copper + oxygen',eq:'Cu + O2 -> CuO',type:'syn',obs:1,proc:['Fold a small piece of copper into a foil packet.','Hold it in the flame with tongs.']},
+  {id:'L3',name:'Magnesium + oxygen',eq:'Mg + O2 -> MgO',type:'syn',obs:2,predict:true,proc:['Cut a 3 cm strip of magnesium ribbon.','Hold it in the flame until it ignites. Don\'t look directly at the light!']},
+  {id:'L4',name:'Copper + silver nitrate',eq:'Cu + AgNO3 -> Cu(NO3)2 + Ag',type:'sr',obs:3,proc:['Fill a test tube halfway with silver nitrate solution.','Coil 8 cm of copper wire and place it in the tube.']},
+  {id:'L5',name:'Iron(III) chloride + sodium hydroxide',eq:'FeCl3 + NaOH -> Fe(OH)3 + NaCl',type:'dr',obs:4,predict:true,proc:['Pour 5 mL of FeCl₃ solution into a test tube.','Rinse the graduated cylinder, then add 5 mL of NaOH solution.']},
+  {id:'L6',name:'Decomposition of ammonium dichromate',eq:'(NH4)2Cr2O7 -> Cr2O3 + N2 + H2O',type:'dec',obs:5,proc:['Pile two scoops of ammonium dichromate on foil.','Heat it with the burner until it sparks, then move the burner away.']}].map(l=>({...l,...mkEq(l.eq,l.type)}));
+const hex=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
+const mix=(a,b,t)=>{const A=hex(a),B=hex(b);return '#'+A.map((x,i)=>Math.round(x+(B[i]-x)*t).toString(16).padStart(2,'0')).join('')};
+const rnd=seed=>()=>((seed=Math.imul(seed^seed>>>15,seed|1)+0x6D2B79F5|0)>>>0)%10000/10000;
+function burner(x,h,col='#5aa8ff'){return `<rect x="${x-16}" y="230" width="32" height="40" rx="4" fill="#4a5570"/><rect x="${x-30}" y="268" width="60" height="10" rx="3" fill="#39425a"/>
+  ${h>0?`<path d="M${x-12} 230 Q${x-16} ${230-h*.5} ${x} ${230-h} Q${x+16} ${230-h*.5} ${x+12} 230 Z" fill="${col}" opacity=".75"/><path d="M${x-6} 230 Q${x-7} ${230-h*.3} ${x} ${230-h*.55} Q${x+7} ${230-h*.3} ${x+6} 230 Z" fill="#cfe6ff" opacity=".8"/>`:''}`;}
+function tube(x,liq,extra=''){return `<path d="M${x-26} 40 L${x-26} 230 Q${x-26} 262 ${x} 262 Q${x+26} 262 ${x+26} 230 L${x+26} 40" fill="none" stroke="#9fb0d8" stroke-width="3"/>
+  <path d="M${x-23} 120 L${x-23} 230 Q${x-23} 258 ${x} 258 Q${x+23} 258 ${x+23} 230 L${x+23} 120 Z" fill="${liq}" opacity=".85"/>${extra}`;}
+function scene(L,t){
+  const R=rnd(7);let s='<rect x="0" y="278" width="420" height="22" fill="#141a2e"/>';
+  const lab=(x,y,txt)=>`<text x="${x}" y="${y}" fill="#8f9aba" font-size="12" font-family="Space Grotesk,sans-serif" text-anchor="middle">${txt}</text>`;
+  if(L.id==='L1'){s+=burner(210,t>0?40+60*t:0);s+=`<path d="M150 60 Q210 85 270 60" fill="#9fb0d833" stroke="#9fb0d8" stroke-width="2"/>`;
+    for(let i=0;i<Math.floor(t*16);i++){s+=`<circle cx="${160+R()*100}" cy="${66+R()*10}" r="${2+R()*2}" fill="#cfe9ff" opacity=".8"/>`}
+    if(t>0)for(let i=0;i<5;i++){const y=140-((t*300+i*30)%80);s+=`<path d="M${180+i*15} ${y+20} q5 -10 0 -20" stroke="#ff9f6b55" fill="none" stroke-width="2"/>`;}
+    s+=lab(210,40,'cold watch glass')+lab(210,295,'Bunsen burner (CH₄)');}
+  else if(L.id==='L2'){s+=burner(210,t>0?70:0);s+=`<line x1="330" y1="70" x2="232" y2="112" stroke="#8f9aba" stroke-width="4"/><rect x="185" y="95" width="50" height="34" rx="3" fill="${mix('#c87533','#1c1a1a',Math.min(1,t*1.2))}" stroke="#d9d9d9" stroke-width="2"/>`+lab(210,80,'copper in foil packet')+lab(210,295,'flame');}
+  else if(L.id==='L3'){const burn=t>0.25&&t<0.85;s+=burner(210,t>0?60:0);s+=`<line x1="330" y1="60" x2="230" y2="120" stroke="#8f9aba" stroke-width="4"/><line x1="230" y1="120" x2="${t>0.85?205:190}" y2="${t>0.85?140:150}" stroke="${t>0.85?'#f2f2f2':'#a7adb8'}" stroke-width="${t>0.85?6:3}" stroke-linecap="round"/>`;
+    if(burn){const k=Math.sin((t-0.25)/0.6*Math.PI);s+=`<circle cx="200" cy="140" r="${30+120*k}" fill="#ffffff" opacity="${0.25+0.6*k}"/><circle cx="200" cy="140" r="${18+20*k}" fill="#ffffff"/>`;}
+    s+=lab(210,40,'magnesium ribbon');}
+  else if(L.id==='L4'){let x='';
+    x+=`<path d="M210 70 L210 140 q-14 10 0 20 q14 10 0 20 q-14 10 0 20 q14 10 0 20" stroke="#c87533" stroke-width="5" fill="none"/>`;
+    for(let i=0;i<Math.floor(t*40);i++){const yy=150+R()*95,xx=197+R()*26;x+=`<path d="M${xx} ${yy} l${3+R()*5} ${-3+R()*6} l${-4} ${3}" stroke="#e8edf5" stroke-width="2" fill="none"/>`}
+    s+=tube(210,mix('#e8f0ff','#5fa3e6',t*.85),x)+lab(210,295,'AgNO₃(aq) + copper wire');}
+  else if(L.id==='L5'){let x='';const n=Math.floor(t*50);
+    for(let i=0;i<n;i++){const yy=t>0.6&&i%2?236+R()*18:150+R()*90;x+=`<ellipse cx="${190+R()*40}" cy="${yy}" rx="${4+R()*5}" ry="${3+R()*3}" fill="#8b3d14" opacity=".85"/>`}
+    s+=tube(210,t>0?mix('#f2b134','#c7672a',t):'#f2b134',x);
+    if(t===0)s+=`<path d="M270 40 L262 70" stroke="#e9edf7" stroke-width="2"/>`+lab(320,60,'add NaOH(aq)');
+    s+=lab(210,295,'FeCl₃(aq) + NaOH(aq)');}
+  else if(L.id==='L6'){s+=`<path d="M100 262 L320 262 L300 270 L120 270 Z" fill="#c9ced8"/>`;
+    const o=Math.max(0,1-t*1.3),g=t;
+    s+=`<path d="M${210-60*o} 262 Q210 ${262-70*o} ${210+60*o} 262 Z" fill="#e8742a"/>`;
+    for(let i=0;i<Math.floor(g*24);i++){s+=`<circle cx="${210+(R()-.5)*170*g}" cy="${262-R()*120*g}" r="${6+R()*10}" fill="${mix('#3f7d3a','#6fae52',R())}" opacity=".9"/>`}
+    if(t>0&&t<0.9)for(let i=0;i<14;i++){const a=R()*Math.PI,len=20+R()*40;s+=`<line x1="210" y1="${250-60*g}" x2="${210+Math.cos(a)*len*2}" y2="${250-60*g-Math.sin(a)*len}" stroke="#ffd27a" stroke-width="2"/>`}
+    if(t>0)for(let i=0;i<4;i++){const y=150-((t*200+i*40)%120);s+=`<circle cx="${180+i*20}" cy="${y-40*g}" r="${10+i*3}" fill="#9fb0d82a"/>`}
+    s+=lab(210,295,'(NH₄)₂Cr₂O₇ on foil');}
+  return s;
+}
+(function(){
+  let cur=LABS.find(l=>!(S.s6.labs[l.id]||{}).bal)||LABS[0],t=0,ran=false,raf=null;
+  const st=()=>S.s6.labs[cur.id]||(S.s6.labs[cur.id]={obs:false,type:false,pred:false,bal:false});
+  function buttons(){$('#labBtns').innerHTML=LABS.map((l,i)=>{const s=S.s6.labs[l.id]||{};return `<button data-i="${i}" class="${l===cur?'cur':''} ${s.obs&&s.type&&s.bal?'done':''}"><b>Lab ${i+1}</b>${l.name}</button>`}).join('');
+    $$('#labBtns button').forEach(b=>b.onclick=()=>{cur=LABS[+b.dataset.i];select();});}
+  function draw(){$('#scene').innerHTML=scene(cur,t);}
+  function select(){cancelAnimationFrame(raf);const s=S.s6.labs[cur.id]||{};ran=!!s.obs;t=ran?1:0;draw();buttons();
+    $('#labProc').innerHTML=cur.proc.map(p=>`<li>${p}</li>`).join('');$('#labNote').textContent=ran?'Run it again anytime.':'';work();}
+  $('#runLab').onclick=()=>{cancelAnimationFrame(raf);const t0=performance.now();
+    const go=n=>{t=Math.min(1,(n-t0)/3800);draw();if(t<1)raf=requestAnimationFrame(go);else{ran=true;$('#labNote').textContent='Reaction complete. Record your observation.';work();}};raf=requestAnimationFrame(go);};
+  function work(){
+    const s=st(),W=$('#labWork');
+    if(!ran){W.innerHTML=`<h3 style="margin:0 0 6px">Lab ${LABS.indexOf(cur)+1}: ${cur.name}</h3><p class="hint">Read the procedure, then click <b>Run reaction</b> and watch closely.</p>`;return}
+    W.innerHTML=`<h3 style="margin:0 0 6px">Lab ${LABS.indexOf(cur)+1}: ${cur.name}</h3>
+      <div class="step"><span class="n">1</span>Observation: what did you see?</div><div class="opts" id="lbO"></div>
+      <div id="lbT" ${s.obs?'':'hidden'}><div class="step"><span class="n">2</span>Reaction type:</div><div class="tbtns">${TORDER.map(k=>`<button data-k="${k}" class="${s.type&&k===cur.type?'ok':''}">${TYPES[k]}</button>`).join('')}</div></div>
+      ${cur.predict?`<div id="lbP" ${s.type?'':'hidden'}><div class="step"><span class="n">3</span>Predict the product${cur.p.length>1?'s':''}: <span class="mono">${fmtSide(cur.r.join(' + '))} → </span><input class="fill" id="lbIn" autocomplete="off" spellcheck="false" style="min-width:180px"><button class="btn sm" id="lbChk">Check</button></div><div class="step">Preview: <span class="preview" id="lbPrev"></span></div></div>`:''}
+      <div id="lbB" ${(s.type&&(!cur.predict||s.pred))?'':'hidden'}><div class="step"><span class="n">${cur.predict?4:3}</span>Balance the reaction:</div><div id="lbBal"></div></div>
+      <div class="msg" hidden id="lbMsg"></div>`;
+    const M=$('#lbMsg'),say=(m,k)=>{M.hidden=false;M.className='msg '+(k||'');M.innerHTML=m};
+    const ord=shuffle([cur.obs,...shuffle([0,1,2,3,4,5].filter(i=>i!==cur.obs)).slice(0,3)]);
+    ord.forEach(i=>{const b=document.createElement('button');b.className='opt';b.textContent=OBS[i];if(s.obs&&i===cur.obs)b.classList.add('ok');if(s.obs)b.disabled=true;$('#lbO').appendChild(b);
+      b.onclick=()=>{if(s.obs)return;if(i===cur.obs){s.obs=true;save();refresh();work();}else{b.classList.add('no');b.disabled=true;say('✗ That isn\'t what happened here. Run the reaction again and watch closely.','no');}};});
+    $$('#lbT button').forEach(b=>b.onclick=()=>{if(s.type)return;if(b.dataset.k===cur.type){s.type=true;save();refresh();work();}else{b.classList.add('no');b.disabled=true;say('✗ Check the equation: '+fmtEq(cur.eq.split(' -> ')[0]+' -> '+cur.p.join(' + '))+'. Use the flowchart order.','no');}});
+    if(cur.predict&&s.type){const inp=$('#lbIn');
+      if(s.pred){inp.value=cur.p.join(' + ');inp.disabled=true;mark(inp,true);$('#lbChk').disabled=true;}
+      fPreview(inp,$('#lbPrev'));
+      const chk=()=>{const r=checkPred(inp.value,{r:cur.r,sets:[cur.p],type:cur.type});if(r.ok){s.pred=true;save();work();}else{mark(inp,false);say('✗ '+r.msg,'no');}};
+      $('#lbChk').onclick=chk;inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!inp.disabled)chk()});}
+    if(s.type&&(!cur.predict||s.pred))balancer($('#lbBal'),cur.r,cur.p,{doneAlready:s.bal,onDone:()=>{s.bal=true;save();refresh();buttons();
+      const nx=LABS.find(l=>!(S.s6.labs[l.id]||{}).bal);say(`✓ Lab ${LABS.indexOf(cur)+1} complete! ${nx?`<button class="btn sm" id="lbNext" style="margin-left:6px">Next lab →</button>`:'All six lab reactions are done.'}`,'ok');
+      if(nx)$('#lbNext').onclick=()=>{cur=nx;select();};}});
+    if(s.obs&&s.type&&s.bal)say('✓ This lab is complete.','ok');
+  }
+  select();
+})();
+
+const PPT=[
+  {r:'Ca(OH)2 + HF',p:'H2O + CaF2',o:['CaF₂','H₂O','No precipitate forms','No reaction: a reactant doesn\'t dissolve'],e:'Calcium fluoride is insoluble, so CaF₂ precipitates.'},
+  {r:'Pb(NO3)2 + K2CrO4',p:'PbCrO4 + KNO3',o:['PbCrO₄','KNO₃','No precipitate forms','No reaction: a reactant doesn\'t dissolve'],e:'Chromates are insoluble except with Na⁺, K⁺ and NH₄⁺; nitrates always dissolve.'},
+  {r:'NaC2H3O2 + H2SO4',p:'Na2SO4 + HC2H3O2',o:['No precipitate forms','Na₂SO₄','HC₂H₃O₂','No reaction: a reactant doesn\'t dissolve'],e:'Sodium compounds dissolve, so no precipitate forms.'},
+  {r:'Cu(OH)2 + H3PO4',p:'Cu3(PO4)2 + H2O',o:['Cu₃(PO₄)₂','H₂O','No precipitate forms','No reaction: a reactant doesn\'t dissolve'],e:'Phosphates are insoluble except with Na⁺, K⁺ and NH₄⁺. Copper(II) phosphate precipitates.'},
+  {r:'AgNO3 + Na2CO3',p:'Ag2CO3 + NaNO3',o:['Ag₂CO₃','NaNO₃','No precipitate forms','No reaction: a reactant doesn\'t dissolve'],e:'Silver carbonate is insoluble; sodium nitrate dissolves.'},
+  {r:'Pb(OH)2 + Hg2S',p:'',o:['No reaction: a reactant doesn\'t dissolve','PbS','Hg₂(OH)₂','No precipitate forms'],e:'Neither Pb(OH)₂ nor Hg₂S dissolves in water, so the ions can never meet and switch partners.'}];
+(function(){
+  const root=$('#ppt6'),got=new Set();
+  root.innerHTML=PPT.map((q,i)=>`<div class="q" data-i="${i}"><p class="qp"><b>${i+1}.</b> <span class="mono">${fmtSide(q.r)} → ${q.p?fmtSide(q.p):'?'}</span><br><span class="hint">Which product precipitates?</span></p><div class="opts"></div><div class="fb"></div></div>`).join('');
+  $$('#ppt6 .q').forEach(d=>{const q=PPT[+d.dataset.i];shuffle(q.o.map((_,k)=>k)).forEach(k=>{const b=document.createElement('button');b.className='opt';b.innerHTML=q.o[k];d.querySelector('.opts').appendChild(b);
+    if(S.s6.ppt&&k===0){b.classList.add('ok');d.classList.add('right');d.querySelector('.fb').innerHTML='✓ '+q.e;}
+    b.onclick=()=>{if(d.classList.contains('right'))return;if(k===0){b.classList.add('ok');d.classList.add('right');d.querySelector('.fb').innerHTML='✓ '+q.e;got.add(+d.dataset.i);if(got.size===PPT.length&&!S.s6.ppt){S.s6.ppt=true;save();refresh();}}
+      else{b.classList.add('no');b.disabled=true;d.querySelector('.fb').innerHTML='✗ Check each product against the solubility rules.';}};});});
+})();
+
+checkpoint('#cp6',[
+  {q:'Which observation is evidence that a <b>new substance</b> formed?',o:['A solid forms when two clear solutions are mixed','Water evaporates from a beaker','Ice melts on the counter','Salt dissolves in water'],e:'A precipitate, a gas, light, or a color change can signal a chemical change. The others are physical changes.'},
+  {q:'The rust-brown solid in Lab 5 (FeCl₃ + NaOH) is…',o:['Fe(OH)₃, a precipitate','NaCl','FeCl₃','sodium metal'],e:'Iron(III) hydroxide is insoluble, so it settles out of the solution.'},
+  {q:'Why did silvery crystals form on the copper wire in Lab 4?',o:['Copper replaced Ag⁺ ions, so silver metal formed (single replacement)','The copper melted','The silver nitrate evaporated'],e:'Cu + 2AgNO₃ → Cu(NO₃)₂ + 2Ag. The blue color comes from Cu²⁺ ions.'},
+  {q:'What type of reaction is Lab 3, magnesium burning in air (2Mg + O₂ → 2MgO)?',o:['synthesis','decomposition','double replacement','single replacement'],e:'Two elements combine into one product.'},
+  {q:'Ammonium dichromate breaking into Cr₂O₃, N₂ and H₂O is…',o:['decomposition','synthesis','combustion','double replacement'],e:'One reactant breaks into three products. The green solid is Cr₂O₃.'},
+  {q:'A precipitate is…',o:['an insoluble solid that forms from a solution','a gas that bubbles out of a solution','an ion dissolved in water'],e:'Precipitates form in many double replacement reactions.'}],'s6');
+
+/* ===================== STATION 7: MASTERY ===================== */
+const POOL={
+ 1:[
+  {q:'Classify: 2KClO₃ → 2KCl + 3O₂',o:['decomposition','synthesis','single replacement','combustion'],e:'One reactant breaks into two products.'},
+  {q:'Classify: Cl₂ + 2NaBr → 2NaCl + Br₂',o:['single replacement','double replacement','synthesis','decomposition'],e:'A lone element (Cl₂) replaces another (Br).'},
+  {q:'Classify: N₂ + 3H₂ → 2NH₃',o:['synthesis','decomposition','single replacement','combustion'],e:'Two reactants form one product.'},
+  {q:'Classify: Na₂CO₃ + CaCl₂ → CaCO₃ + 2NaCl',o:['double replacement','single replacement','synthesis','decomposition'],e:'Two compounds switch partners.'},
+  {q:'Classify: 2C₄H₁₀ + 13O₂ → 8CO₂ + 10H₂O',o:['combustion','synthesis','double replacement','decomposition'],e:'A hydrocarbon burns in O₂ to CO₂ and H₂O.'},
+  {q:'Which pattern describes single replacement?',o:['A + BC → AC + B','AB + CD → AD + CB','AB → A + B','A + B → AB'],e:'One element replaces part of a compound.'},
+  {q:'Which reaction type always has exactly one product?',o:['synthesis','decomposition','combustion','double replacement'],e:'A + B → AB.'},
+  {q:'Which is a decomposition reaction?',o:['MgCO₃ → MgO + CO₂','MgO + H₂O → Mg(OH)₂','Mg + CuSO₄ → MgSO₄ + Cu','CH₄ + 2O₂ → CO₂ + 2H₂O'],e:'One reactant breaks into smaller compounds.'}],
+ 2:[
+  {q:'Predict the products: AgNO₃ + NaCl → ?',o:['AgCl + NaNO₃','AgNa + ClNO₃','Ag + NaNO₃Cl','No reaction'],e:'Double replacement: Ag⁺ takes Cl⁻, Na⁺ takes NO₃⁻.'},
+  {q:'Predict the products: Zn + CuCl₂ → ?',o:['ZnCl₂ + Cu','ZnCu + Cl₂','CuZn + Cl','Zn + Cu + Cl₂'],e:'Single replacement: zinc replaces copper.'},
+  {q:'Predict the products: C₃H₈ + O₂ → ?',o:['CO₂ + H₂O','C₃O₂ + H₈','CO + H₂','C + H₂O'],e:'Combustion of a hydrocarbon.'},
+  {q:'Predict the products: 2HgO → ?',o:['2Hg + O₂','Hg₂ + O₂','2Hg + 2O','HgO₂'],e:'Decomposition into elements; oxygen is diatomic and mercury is not.'},
+  {q:'Predict the product: Ca + Cl₂ → ?',o:['CaCl₂','CaCl','Ca₂Cl','Ca + Cl₂'],e:'Synthesis: Ca²⁺ needs two Cl⁻.'},
+  {q:'Predict the products: K + H₂O → ?',o:['KOH + H₂','K₂O + H₂','KH + OH','KOH + H'],e:'Single replacement: K replaces one H, leaving KOH and H₂ gas.'},
+  {q:'In a single replacement reaction, a halogen element (like F₂) replaces…',o:['the anion in a compound','the cation in a compound','both ions'],e:'Like replaces like: a nonmetal replaces a nonmetal anion.'},
+  {q:'Predict the products: Na₂SO₄ + BaCl₂ → ?',o:['BaSO₄ + NaCl','BaNa₂ + Cl₂SO₄','Ba + Na₂SO₄Cl₂','Na + Ba + SO₄Cl₂'],e:'Double replacement: Ba²⁺ with SO₄²⁻, Na⁺ with Cl⁻.'}],
+ 3:[
+  {q:'Balance: __Na + __Cl₂ → __NaCl',o:['2, 1, 2','1, 1, 1','1, 2, 2','2, 2, 2'],e:'2 Na and 2 Cl on each side.'},
+  {q:'Balance: __H₂O → __H₂ + __O₂',o:['2, 2, 1','1, 1, 1','2, 1, 2','1, 2, 1'],e:'4 H and 2 O on each side.'},
+  {q:'Balance: __Al + __HCl → __AlCl₃ + __H₂',o:['2, 6, 2, 3','1, 3, 1, 1','2, 3, 2, 3','1, 6, 1, 3'],e:'2 Al, 6 H and 6 Cl on each side.'},
+  {q:'Which formula correctly balances the charges of Ca²⁺ and PO₄³⁻?',o:['Ca₃(PO₄)₂','CaPO₄','Ca₂(PO₄)₃','Ca₃PO₄₂'],e:'3(2+) + 2(3−) = 0. Parentheses hold the phosphate ion together.'},
+  {q:'Which of these is written correctly as a lone element?',o:['Br₂','Na₂','Cl','Mg₂'],e:'Bromine is diatomic. Metals are written as single atoms, and chlorine would be Cl₂.'},
+  {q:'Complete and balance: Fe(NO₃)₃ + NaOH → ?',o:['Fe(NO₃)₃ + 3NaOH → Fe(OH)₃ + 3NaNO₃','Fe(NO₃)₃ + NaOH → FeOH + Na(NO₃)₃','Fe(NO₃)₃ + 3NaOH → Fe + 3NaNO₃ + OH','Fe(NO₃)₃ + NaOH → FeNa + NO₃OH'],e:'Fe³⁺ needs 3 OH⁻, and then 3 NaNO₃ balance the nitrate.'},
+  {q:'Balance: __CH₄ + __O₂ → __CO₂ + __H₂O',o:['1, 2, 1, 2','1, 1, 1, 2','2, 1, 2, 1','1, 3, 1, 2'],e:'1 C, 4 H and 4 O on each side.'},
+  {q:'A student balances H₂ + O₂ → H₂O by writing H₂ + O₂ → H₂O₂. What went wrong?',o:['They changed a subscript, which turned water into a different substance','Nothing; it is balanced','They should have used O instead of O₂'],e:'Correct: 2H₂ + O₂ → 2H₂O.'},
+  {q:'Which correctly predicts and balances the decomposition of NaCl?',o:['2NaCl → 2Na + Cl₂','NaCl → Na + Cl','2NaCl → Na₂ + Cl₂','NaCl → Na + Cl₂'],e:'Chlorine is diatomic, so 2 NaCl are needed.'}]};
+let finalSet=null,finalAns=[];
+const STN=['Reaction Types','Classify It','Predict Products','Charges & Diatomics','Balance It','Virtual Lab'];
+function renderFinal(){
+  const el=$('#finalCard');
+  if(!allStations()){el.innerHTML=`<div class="banner warn">🔒 Finish Stations 1–6 to unlock the Mastery Check.</div><ul class="reqs">${STN.map((t,i)=>`<li>${done[i+1]()?'✅':'⬜'} Station ${i+1}: ${t}</li>`).join('')}</ul>`;return;}
+  if(!finalSet){finalSet=[...shuffle(POOL[1]).slice(0,3),...shuffle(POOL[2]).slice(0,3),...shuffle(POOL[3]).slice(0,4)].map(q=>({...q,ord:shuffle(q.o.map((_,i)=>i))}));finalAns=Array(10).fill(null);}
+  el.innerHTML=(S.finalPassed?`<div class="banner">✓ Passed with ${S.finalScore}/10. Your certificate is unlocked. You can retake to improve your score.</div>`:'')+
+    finalSet.map((q,qi)=>`<div class="q" data-q="${qi}"><p class="qp"><b>${qi+1}.</b> ${q.q}</p><div class="opts">${q.ord.map(oi=>`<button class="opt" data-o="${oi}">${q.o[oi]}</button>`).join('')}</div><div class="fb"></div></div>`).join('')+
+    `<div style="margin-top:14px" class="row"><button class="btn" id="submitFinal">Submit answers</button><span class="hint" id="finalHint" style="margin:0"></span></div>`;
+  $$('#finalCard .q').forEach(d=>{const qi=+d.dataset.q;d.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{if(d.dataset.locked)return;finalAns[qi]=+b.dataset.o;d.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===b))})});
+  $('#submitFinal').onclick=()=>{
+    if(finalAns.some(a=>a===null)){$('#finalHint').textContent='Answer all 10 questions first.';return}
+    let sc=0;
+    $$('#finalCard .q').forEach(d=>{const qi=+d.dataset.q,o=finalAns[qi]===0;if(o)sc++;d.dataset.locked=1;
+      d.querySelectorAll('.opt').forEach(b=>{const v=+b.dataset.o;b.disabled=true;if(v===0)b.classList.add('ok');else if(v===finalAns[qi])b.classList.add('no')});
+      d.querySelector('.fb').innerHTML=(o?'✓ ':'✗ ')+finalSet[qi].e;if(o)d.classList.add('right')});
+    const pass=sc>=8;
+    if(pass){S.finalPassed=true;S.finalScore=Math.max(S.finalScore||0,sc);save();refresh();}
+    const box=document.createElement('div');box.className='banner'+(pass?'':' warn');box.style.marginTop='14px';
+    box.innerHTML=pass?`🎉 You scored <b>${sc}/10</b>. Mastery shown! Head to the Certificate tab.`:`You scored <b>${sc}/10</b>. You need 8. Read the explanations above, then retake with a new set of questions.`;
+    $('#submitFinal').replaceWith(box);
+    const again=document.createElement('button');again.className='btn ghost';again.textContent=pass?'Retake for a higher score':'Retake with new questions';again.style.marginTop='10px';
+    again.onclick=()=>{finalSet=null;renderFinal();window.scrollTo({top:0,behavior:'smooth'})};
+    $('#finalCard').append(again);
+    if(pass){const g=document.createElement('button');g.className='btn';g.textContent='Go to my certificate →';g.style.margin='10px 0 0 10px';g.onclick=()=>show(8);$('#finalCard').append(g);}
+    finalSet=null;
+  };
+}
+
+/* ===================== CERTIFICATE ===================== */
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return (h>>>0).toString(36).toUpperCase().padStart(7,'0')}
+function renderCert(){
+  const el=$('#certCard');
+  if(!(allStations()&&S.finalPassed)){
+    el.innerHTML=`<div class="banner warn">🔒 Complete all seven stations to unlock your certificate.</div><ul class="reqs">${[...STN,'Mastery Check (8/10 or better)'].map((t,i)=>`<li>${done[i+1]()?'✅':'⬜'} Station ${i+1}: ${t}</li>`).join('')}</ul>`;return;}
+  const c=S.cert||{};
+  el.innerHTML=`<div class="form">
+    <label>Student name<input id="cName" value="${esc(c.name||'')}" placeholder="First and last name"></label>
+    <label>Class / hour<input id="cHour" value="${esc(c.hour||'')}" placeholder="e.g. Chemistry, 3rd hour" style="min-width:200px"></label>
+    <label>Teacher<input id="cTeach" value="${esc(c.teacher||'Mr. Choudoir')}" style="min-width:160px"></label>
+    <button class="btn" id="mkCert">Generate certificate</button></div>
+    <p class="hint" id="certHint"></p>
+    <div class="row" id="dlRow" hidden style="margin-top:8px"><button class="btn ghost" id="dlCert">Download certificate (PNG)</button><span class="hint" id="dlFb" style="margin:0"></span></div>
+    <div class="certwrap" id="certOut" style="margin-top:14px"></div>`;
+  $('#mkCert').onclick=makeCert;
+  if(S.cert) makeCert();
+}
+let certURL=null,certFile='certificate.png';
+async function makeCert(){
+  const name=$('#cName').value.trim(),hour=$('#cHour').value.trim(),teacher=$('#cTeach').value.trim();
+  if(name.length<2){$('#certHint').textContent='Please type your full name.';return}
+  const date=S.cert&&S.cert.name===name&&S.cert.date?S.cert.date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  S.cert={name,hour,teacher,date};save();refresh();
+  try{await Promise.all(['800 60px "Playfair Display"','italic 500 28px "Playfair Display"','600 20px "Space Grotesk"','400 16px "IBM Plex Mono"'].map(f=>document.fonts.load(f)))}catch(e){}
+  const W=1650,H=1275,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');
+  c.fillStyle='#fbf7ec';c.fillRect(0,0,W,H);
+  const g=c.createRadialGradient(W/2,H/2,100,W/2,H/2,900);g.addColorStop(0,'rgba(255,255,255,.6)');g.addColorStop(1,'rgba(230,220,195,.35)');c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.strokeStyle='#14213d';c.lineWidth=10;c.strokeRect(40,40,W-80,H-80);
+  c.strokeStyle='#b8902f';c.lineWidth=3;c.strokeRect(62,62,W-124,H-124);c.lineWidth=1;c.strokeRect(72,72,W-144,H-144);
+  // reaction band: AB + CD -> AD + CB
+  const ball=(x,col)=>{c.fillStyle=col;c.globalAlpha=.85;c.beginPath();c.arc(x,140,17,0,7);c.fill();c.globalAlpha=1};
+  const O='#e0783a',B='#3c7dc4',P='#6a4cc4',G='#2a8a5a';
+  [[555,O],[589,B],[680,P],[714,G],[936,O],[970,G],[1061,P],[1095,B]].forEach(([x,col])=>ball(x,col));
+  c.fillStyle='#b8902f';c.font='700 30px "Space Grotesk"';c.textAlign='center';c.fillText('+',634,151);c.fillText('+',1016,151);
+  c.strokeStyle='#b8902f';c.lineWidth=4;c.beginPath();c.moveTo(770,140);c.lineTo(880,140);c.stroke();c.beginPath();c.moveTo(866,128);c.lineTo(882,140);c.lineTo(866,152);c.stroke();
+  c.fillStyle='#8a7a4a';c.font='600 15px "Space Grotesk"';c.fillText('PARTNERS SWITCH  ·  ATOMS ARE CONSERVED',W/2,190);
+  c.fillStyle='#14213d';c.font='800 78px "Playfair Display"';c.fillText('Certificate of Completion',W/2,280);
+  c.fillStyle='#b8902f';c.font='600 22px "Space Grotesk"';c.fillText('PREDICTING REACTIONS LAB  ·  CHEMISTRY',W/2,326);
+  c.fillStyle='#444';c.font='italic 500 30px "Playfair Display"';c.fillText('This certifies that',W/2,394);
+  let fs=86;c.font=`800 ${fs}px "Playfair Display"`;while(c.measureText(name).width>1100&&fs>40){fs-=4;c.font=`800 ${fs}px "Playfair Display"`}
+  c.fillStyle='#14213d';c.fillText(name,W/2,490);
+  c.strokeStyle='#b8902f';c.lineWidth=2;c.beginPath();c.moveTo(W/2-460,515);c.lineTo(W/2+460,515);c.stroke();
+  c.fillStyle='#333';c.font='400 24px "Space Grotesk"';c.fillText('has completed all seven stations and demonstrated mastery of the standard:',W/2,566);
+  c.fillStyle='#14213d';c.font='italic 600 26px "Playfair Display"';
+  let y=wrap(c,'“I can predict the products of a chemical reaction after I identify the type of chemical reaction.”',W/2,612,1200,34)+10;
+  const tg=['I can identify types of chemical reactions.','I can classify and predict the products of a chemical reaction.','I can predict products, balance charges of new compounds, and balance chemical reactions (diatomic elements).'];
+  c.textAlign='left';
+  tg.forEach(t=>{c.fillStyle='#2a8a5a';c.font='700 22px "Space Grotesk"';c.fillText('✓',300,y);c.fillStyle='#333';c.font='400 21px "Space Grotesk"';y=wrap(c,t,334,y,1020,28)+6;});
+  c.textAlign='center';c.fillStyle='#8a7a4a';c.font='600 16px "Space Grotesk"';c.fillText('STATIONS COMPLETED',W/2,y+26);c.fillStyle='#444';c.font='400 19px "Space Grotesk"';
+  c.fillText('Reaction Types  ·  Classify It  ·  Predict Products  ·  Charges & Diatomics',W/2,y+56);c.fillText('Balance It  ·  Virtual Lab  ·  Mastery Check',W/2,y+84);
+  const col=(x,big,small)=>{c.strokeStyle='#14213d';c.lineWidth=1.5;c.beginPath();c.moveTo(x-180,1050);c.lineTo(x+180,1050);c.stroke();c.fillStyle='#14213d';c.font='600 26px "Space Grotesk"';c.fillText(big,x,1036);c.fillStyle='#6b6450';c.font='400 17px "Space Grotesk"';c.fillText(small,x,1076)};
+  col(380,date,'Date completed');
+  col(W/2,`${S.finalScore}/10  (${S.finalScore*10}%)`,'Mastery Check score');
+  col(W-380,teacher||'','Teacher'+(hour?'  ·  '+hour:''));
+  const sx=W/2,sy=1165;c.fillStyle='#b8902f';c.beginPath();for(let i=0;i<48;i++){const r=i%2?44:52,a=i*Math.PI/24;c.lineTo(sx+r*Math.cos(a),sy+r*Math.sin(a))}c.closePath();c.fill();
+  c.fillStyle='#fbf7ec';c.beginPath();c.arc(sx,sy,34,0,7);c.fill();c.fillStyle='#b8902f';c.font='800 30px "Playfair Display"';c.fillText('→',sx,sy+10);
+  c.fillStyle='#8a7a4a';c.font='400 15px "IBM Plex Mono"';c.textAlign='right';
+  c.fillText('Completion ID: PRL-'+hash(name+'|'+date+'|'+S.finalScore),W-110,H-100);
+  certURL=cv.toDataURL('image/png');certFile='Predicting Reactions Certificate - '+name.replace(/[^\w\s-]/g,'')+'.png';
+  const img=new Image();img.src=certURL;img.alt='Certificate of completion for '+name;
+  $('#certOut').innerHTML='';$('#certOut').appendChild(img);
+  $('#dlRow').hidden=false;$('#dlCert').onclick=downloadCert;
+  $('#certHint').innerHTML='Save it with the download button, or right-click the certificate → <b>Save image as…</b>, or take a screenshot (Chromebook: <b>Ctrl + Shift + Show windows</b>). Then turn it in on Google Classroom.';
+}
+async function downloadCert(){
+  const fb=$('#dlFb');fb.textContent='';
+  const blob=await (await fetch(certURL)).blob();
+  try{
+    if(window.claude&&typeof window.claude.use==='function'){
+      const dl=await window.claude.use('downloads');
+      if(dl){await dl.save({filename:certFile,data:blob});fb.textContent='✓ Saved.';return}
+    }
+  }catch(e){if(e&&e.code==='declined'){fb.textContent='Download cancelled.';return}}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=certFile;document.body.appendChild(a);a.click();a.remove();fb.textContent='If nothing downloaded, right-click the certificate and choose "Save image as…".';}
+  catch(e){fb.textContent='Downloads are blocked here. Right-click the certificate and choose "Save image as…".';}
+}
+function wrap(c,t,x,y,max,lh){const words=t.split(' ');let line='',lines=[];words.forEach(w=>{const test=line?line+' '+w:w;if(c.measureText(test).width>max){lines.push(line);line=w}else line=test});lines.push(line);lines.forEach((l,i)=>c.fillText(l,x,y+i*lh));return y+(lines.length-1)*lh+lh}
+
+/* ---------- save code & reset ---------- */
+$('#saveBtn').onclick=()=>{const p=$('#savePanel');p.hidden=!p.hidden;if(!p.hidden){$('#saveCode').value='PRL1.'+btoa(unescape(encodeURIComponent(JSON.stringify(S))));$('#saveFb').textContent='';p.scrollIntoView({behavior:'smooth'})}};
+$('#copyCode').onclick=async()=>{try{await navigator.clipboard.writeText($('#saveCode').value);$('#saveFb').textContent='✓ Copied. Paste it somewhere safe (like a Google Doc).'}catch(e){$('#saveCode').select();$('#saveFb').textContent='Press Ctrl + C to copy the selected code.'}};
+$('#loadCode').onclick=()=>{const v=$('#saveCode').value.trim();try{if(!v.startsWith('PRL1.'))throw 0;const o=JSON.parse(decodeURIComponent(escape(atob(v.slice(5)))));S=merge(DEF,o);save();location.reload();}catch(e){$('#saveFb').textContent='That code didn\'t work. Copy the whole code, starting with PRL1.'}};
+let resetArm=false;
+$('#resetBtn').onclick=()=>{
+  if(!resetArm){resetArm=true;$('#resetBtn').textContent='Click again to erase all progress';setTimeout(()=>{resetArm=false;$('#resetBtn').textContent='Reset my progress'},4000);return}
+  try{localStorage.removeItem(KEY)}catch(e){}location.reload();
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){clearSel();$('#drawer').classList.remove('open')}});
+refresh();
+const h0=(location.hash.match(/station-(\d)/)||[])[1];
+show(h0?+h0:1);
+})();
+
+</script>
+</body>
+</html>
